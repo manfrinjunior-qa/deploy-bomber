@@ -1,0 +1,89 @@
+{
+  "id": 5,
+  "name": "Deploy de Sexta",
+  "theme": {
+    "floorA": "#2a1214",
+    "floorB": "#251012",
+    "border": "#5a1d22",
+    "rack": "#5b2a30",
+    "rackLight": "#c2410c"
+  },
+  "desc": "17h58 de sexta. Tudo pega fogo e o chefão final está em produção.",
+  "inimigos": [
+    "bug",
+    "merge",
+    "leak"
+  ],
+  "mecanica": "Relógio acelera nos últimos 60 s; blocos pegam fogo",
+  "chefao": "prodBug",
+  "color": "#EF4444",
+  "arenas": [
+    {
+      "nome": "Deploy de Sexta 1",
+      "inimigos": 5,
+      "mapa": [
+        "###############",
+        "#1..x..x.x...2#",
+        "#.#x#x#.#x#.#.#",
+        "#...xx.x.xx.x.#",
+        "#x#.#.#x#x#.#.#",
+        "#x.x..x.x.x.xx#",
+        "#x#.#x#x#.#.#x#",
+        "#.x.x..xxx.x..#",
+        "#.#x#x#.#x#.#.#",
+        "#3..xxx..xx..4#",
+        "###############"
+      ]
+    },
+    {
+      "nome": "Deploy de Sexta 2",
+      "inimigos": 6,
+      "mapa": [
+        "###############",
+        "#1...xx.xx...2#",
+        "#.#x#x#x#x#.#.#",
+        "#.x..x..x.xxx.#",
+        "#x#.#x#x#.#x#x#",
+        "#.xx.x.x..xxxx#",
+        "#x#.#x#x#.#x#.#",
+        "#.xxxxx.x...x.#",
+        "#.#x#x#x#x#.#.#",
+        "#3..x.x......4#",
+        "###############"
+      ]
+    },
+    {
+      "nome": "Deploy de Sexta 3",
+      "inimigos": 6,
+      "mapa": [
+        "###############",
+        "#1..xxxxx.x..2#",
+        "#.#x#x#x#.#x#.#",
+        "#.x....xxxx...#",
+        "#x#.#x#x#x#x#.#",
+        "#.x.xxx..xxxxx#",
+        "#x#x#x#x#.#x#.#",
+        "#.xxxxxx..xx..#",
+        "#.#x#.#x#x#.#.#",
+        "#3..xxxx.x...4#",
+        "###############"
+      ]
+    }
+  ],
+  "bossArena": {
+    "nome": "Deploy de Sexta · Chefão",
+    "mapa": [
+      "###############",
+      "#1...........2#",
+      "#.#.#x#.#.#.#.#",
+      "#...x.x..x.x..#",
+      "#x#x#.#.#.#x#.#",
+      "#..x..........#",
+      "#.#x#.#.#.#.#x#",
+      "#.xx....x...x.#",
+      "#.#.#.#.#.#.#.#",
+      "#3........x..4#",
+      "###############"
+    ]
+  }
+}

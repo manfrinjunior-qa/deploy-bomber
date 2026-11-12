@@ -1,0 +1,88 @@
+{
+  "id": 2,
+  "name": "Sala de Reunião",
+  "theme": {
+    "floorA": "#4a3626",
+    "floorB": "#43301f",
+    "border": "#6b4f38",
+    "rack": "#5b6478",
+    "rackLight": "#7c869c"
+  },
+  "desc": "Uma daily que nunca termina. Reuniões surgem e bloqueiam o caminho.",
+  "inimigos": [
+    "meeting",
+    "bug"
+  ],
+  "mecanica": "Reuniões param o jogador que encostam nelas por 2 s",
+  "chefao": "emailMeeting",
+  "color": "#F59E0B",
+  "arenas": [
+    {
+      "nome": "Sala de Reunião 1",
+      "inimigos": 4,
+      "mapa": [
+        "###############",
+        "#1..x.x.xx...2#",
+        "#.#x#x#x#x#.#.#",
+        "#...x.x.xx.x..#",
+        "#.#.#x#.#.#.#.#",
+        "#x.x.xxx.....x#",
+        "#x#.#.#.#.#x#.#",
+        "#.x..x.....xx.#",
+        "#.#.#.#.#x#.#.#",
+        "#3...........4#",
+        "###############"
+      ]
+    },
+    {
+      "nome": "Sala de Reunião 2",
+      "inimigos": 5,
+      "mapa": [
+        "###############",
+        "#1..x..xxxx..2#",
+        "#.#x#.#x#.#.#.#",
+        "#..xxxxxx.xxx.#",
+        "#x#.#x#.#x#.#.#",
+        "#xxxx......xx.#",
+        "#.#.#x#x#.#.#x#",
+        "#.....xx...x..#",
+        "#.#.#.#x#x#x#.#",
+        "#3.....xxx...4#",
+        "###############"
+      ]
+    },
+    {
+      "nome": "Sala de Reunião 3",
+      "inimigos": 6,
+      "mapa": [
+        "###############",
+        "#1..xxxxx.x..2#",
+        "#.#.#.#.#x#x#.#",
+        "#...xx.xx.xxx.#",
+        "#.#x#x#.#.#x#x#",
+        "#xxxx..xxxx.xx#",
+        "#x#x#x#x#.#.#.#",
+        "#.xxxx..xx..x.#",
+        "#.#x#.#.#x#x#.#",
+        "#3....x.x....4#",
+        "###############"
+      ]
+    }
+  ],
+  "bossArena": {
+    "nome": "Sala de Reunião · Chefão",
+    "mapa": [
+      "###############",
+      "#1..x........2#",
+      "#.#.#.#.#.#.#.#",
+      "#.....x.x.x...#",
+      "#x#.#.#.#.#.#.#",
+      "#.............#",
+      "#.#.#.#.#.#.#.#",
+      "#...x.........#",
+      "#.#.#x#.#.#.#.#",
+      "#3......x.x..4#",
+      "###############"
+    ]
+  }
+}

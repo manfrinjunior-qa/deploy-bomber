@@ -1,0 +1,58 @@
+{
+  "roles": [
+    {
+      "id": "DEV", "name": "DEV", "fullName": "Desenvolvedor", "color": "#8B5CF6",
+      "speed": 3, "range": 3, "bombs": 2,
+      "bombType": "Bomba de Commit", "especialId": "refatorar", "tabelaDropId": "DEV",
+      "finds": "Linguagens de programação",
+      "variants": [
+        { "name": "Hoodie", "style": "hood", "skin": "#f5cba7", "hair": "#8B5CF6", "shirt": "#8B5CF6", "accent": "#34d399", "pants": "#1f2937", "shoes": "#e5e7eb", "glasses": true },
+        { "name": "Front-end", "style": "beanie", "skin": "#8d5a3b", "hair": "#1a1a1a", "shirt": "#7c3aed", "accent": "#f472b6", "pants": "#1f2937", "shoes": "#e5e7eb", "hat": "#ec4899" },
+        { "name": "Back-end", "style": "bald", "skin": "#d9a066", "hair": "#4a2f1b", "shirt": "#6d28d9", "accent": "#a78bfa", "pants": "#111827", "shoes": "#374151", "beard": true, "headset": true },
+        { "name": "Mobile", "style": "long", "skin": "#f5cba7", "hair": "#c2410c", "shirt": "#8B5CF6", "accent": "#fde68a", "pants": "#1f2937", "shoes": "#e5e7eb", "glasses": true }
+      ]
+    },
+    {
+      "id": "QA", "name": "QA", "fullName": "Quality Assurance", "color": "#14B8A6",
+      "speed": 4, "range": 2, "bombs": 2,
+      "bombType": "Bomba de Teste", "especialId": "reportarBug", "tabelaDropId": "QA",
+      "finds": "Ferramentas de automação e bugs",
+      "variants": [
+        { "name": "Clássico", "style": "cap", "skin": "#b87a4b", "hair": "#2b1a10", "shirt": "#f8fafc", "accent": "#14B8A6", "pants": "#1e293b", "shoes": "#0f172a", "hat": "#0f9b8e" },
+        { "name": "Automação", "style": "combed", "skin": "#f5cba7", "hair": "#e8b64c", "shirt": "#14B8A6", "accent": "#f8fafc", "pants": "#1e293b", "shoes": "#0f172a", "headset": true },
+        { "name": "Exploratória", "style": "afro", "skin": "#6b4226", "hair": "#141414", "shirt": "#0d9488", "accent": "#f8fafc", "pants": "#1e293b", "shoes": "#0f172a", "glasses": true },
+        { "name": "Performance", "style": "bun", "skin": "#c68642", "hair": "#7c2d12", "shirt": "#14B8A6", "accent": "#ccfbf1", "pants": "#1e293b", "shoes": "#0f172a" }
+      ]
+    },
+    {
+      "id": "PO", "name": "PO", "fullName": "Product Owner", "color": "#F59E0B",
+      "speed": 2, "range": 3, "bombs": 3,
+      "bombType": "Bomba de Prioridade", "especialId": "repriorizar", "tabelaDropId": "PO",
+      "finds": "Artefatos ágeis",
+      "variants": [
+        { "name": "Clássica", "style": "bun", "skin": "#d9a066", "hair": "#2b1a10", "shirt": "#F59E0B", "accent": "#fff7ed", "pants": "#292524", "shoes": "#1c1917" },
+        { "name": "Ágil", "style": "afro", "skin": "#6b4226", "hair": "#141414", "shirt": "#f59e0b", "accent": "#fde047", "pants": "#292524", "shoes": "#1c1917", "glasses": true },
+        { "name": "Visionário", "style": "combed", "skin": "#f5cba7", "hair": "#b45309", "shirt": "#d97706", "accent": "#fff7ed", "pants": "#292524", "shoes": "#1c1917" },
+        { "name": "Estratégica", "style": "long", "skin": "#c68642", "hair": "#e8b64c", "shirt": "#F59E0B", "accent": "#fff7ed", "pants": "#292524", "shoes": "#1c1917" }
+      ]
+    },
+    {
+      "id": "COM", "name": "COMERCIAL", "fullName": "Comercial", "color": "#EF4444",
+      "speed": 4, "range": 3, "bombs": 1,
+      "bombType": "Bomba de Proposta", "especialId": "pitch", "tabelaDropId": "COM",
+      "finds": "Leads, propostas e comissões",
+      "variants": [
+        { "name": "Executivo de contas", "style": "combed", "skin": "#f5cba7", "hair": "#2b1a10", "shirt": "#dc2626", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14", "tie": "#1e293b" },
+        { "name": "SDR", "style": "combed", "skin": "#d9a066", "hair": "#c2410c", "shirt": "#ef4444", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14", "headset": true },
+        { "name": "Key Account", "style": "long", "skin": "#6b4226", "hair": "#141414", "shirt": "#b91c1c", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14", "glasses": true, "tie": "#1e293b" },
+        { "name": "Gerente de vendas", "style": "bun", "skin": "#b87a4b", "hair": "#2b1a10", "shirt": "#EF4444", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14" }
+      ]
+    }
+  ],
+  "specials": [
+    { "id": "refatorar", "name": "Refatorar", "efeito": "Destrói o bloco à frente sem bomba", "recarga": 8, "alcance": 1 },
+    { "id": "reportarBug", "name": "Reportar Bug", "efeito": "Congela inimigo ou rival em linha reta por 2 s", "recarga": 10, "alcance": 15, "duracao": 2 },
+    { "id": "repriorizar", "name": "Repriorizar", "efeito": "Desarma uma bomba adjacente, inclusive de rivais", "recarga": 12, "alcance": 1 },
+    { "id": "pitch", "name": "Pitch de vendas", "efeito": "Puxa os itens num raio de 3 tiles até você", "recarga": 12, "alcance": 3 }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "enemies": [
+    { "id": "bug", "name": "Bug", "vida": 1, "speed": 2.2, "touch": "damage", "score": 100, "ia": "wander" },
+    { "id": "meeting", "name": "Reunião", "vida": 1, "speed": 1.4, "touch": "freeze", "freeze": 2, "score": 150, "ia": "wander" },
+    { "id": "leak", "name": "Memory Leak", "vida": 1, "speed": 1.8, "touch": "damage", "splitAfter": 10, "score": 120, "ia": "wander" },
+    { "id": "merge", "name": "Merge Conflict", "vida": 1, "speed": 2.0, "touch": "swap", "score": 200, "ia": "chase" }
+  ]
+}

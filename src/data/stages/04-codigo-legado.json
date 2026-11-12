@@ -1,0 +1,88 @@
+{
+  "id": 4,
+  "name": "Código Legado",
+  "theme": {
+    "floorA": "#1f2a12",
+    "floorB": "#1b2510",
+    "border": "#3f4a1e",
+    "rack": "#2f5a33",
+    "rackLight": "#4f8a52"
+  },
+  "desc": "Labirinto de código espaguete. Merge conflicts dividem o mapa ao meio.",
+  "inimigos": [
+    "merge",
+    "bug"
+  ],
+  "mecanica": "Merge Conflicts trocam os jogadores de lado no mapa",
+  "chefao": "monolith",
+  "color": "#22C55E",
+  "arenas": [
+    {
+      "nome": "Código Legado 1",
+      "inimigos": 4,
+      "mapa": [
+        "###############",
+        "#1..x.xx.....2#",
+        "#.#x#x#x#.#x#.#",
+        "#..xx.....xx..#",
+        "#x#x#x#.#.#x#.#",
+        "#xx.x..x..xx..#",
+        "#.#.#x#x#.#.#.#",
+        "#..xx..xxx....#",
+        "#.#.#.#.#x#x#.#",
+        "#3..x.xx.xx..4#",
+        "###############"
+      ]
+    },
+    {
+      "nome": "Código Legado 2",
+      "inimigos": 5,
+      "mapa": [
+        "###############",
+        "#1....x...x..2#",
+        "#.#.#.#.#.#x#.#",
+        "#.x..x..x.xxx.#",
+        "#.#x#x#.#x#x#.#",
+        "#xx...xxx...xx#",
+        "#.#.#x#.#x#.#.#",
+        "#.xx.xx.xx.x..#",
+        "#.#.#x#x#.#.#.#",
+        "#3..xx.x.x...4#",
+        "###############"
+      ]
+    },
+    {
+      "nome": "Código Legado 3",
+      "inimigos": 6,
+      "mapa": [
+        "###############",
+        "#1..xxx.xx...2#",
+        "#.#x#.#.#.#x#.#",
+        "#.xxx..xxxxxx.#",
+        "#x#x#x#x#.#x#x#",
+        "#xxxxx.x.xxx.x#",
+        "#x#x#x#x#x#.#x#",
+        "#.xx..xxx.xx..#",
+        "#.#x#x#x#x#x#.#",
+        "#3..x.x..xx..4#",
+        "###############"
+      ]
+    }
+  ],
+  "bossArena": {
+    "nome": "Código Legado · Chefão",
+    "mapa": [
+      "###############",
+      "#1...xx......2#",
+      "#.#x#.#.#.#.#.#",
+      "#..x.....x..x.#",
+      "#.#.#.#.#.#.#.#",
+      "#.............#",
+      "#.#.#.#.#.#x#x#",
+      "#....x........#",
+      "#.#.#.#.#x#.#.#",
+      "#3.....x.....4#",
+      "###############"
+    ]
+  }
+}

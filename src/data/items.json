@@ -1,0 +1,43 @@
+{
+  "items": [
+    { "id": "js", "icon": "JS", "name": "JavaScript", "role": "DEV", "kind": "attr", "effect": { "stat": "speed", "add": 1 }, "weight": 20, "color": "#facc15", "text": "#1a1a1a", "desc": "Velocidade +1" },
+    { "id": "py", "icon": "PY", "name": "Python", "role": "DEV", "kind": "attr", "effect": { "stat": "range", "add": 1 }, "weight": 20, "color": "#2f6ea8", "text": "#fde047", "desc": "Alcance da explosão +1" },
+    { "id": "jv", "icon": "JV", "name": "Java", "role": "DEV", "kind": "attr", "effect": { "stat": "bombs", "add": 1 }, "weight": 20, "color": "#ea580c", "text": "#1a1a1a", "desc": "+1 bomba simultânea" },
+    { "id": "go", "icon": "GO", "name": "Go", "role": "DEV", "kind": "special", "effect": { "flag": "go" }, "weight": 10, "color": "#06b6d4", "text": "#0b2530", "desc": "Goroutines: solta 2 bombas de uma vez" },
+    { "id": "rs", "icon": "RS", "name": "Rust", "role": "DEV", "kind": "special", "effect": { "flag": "shield" }, "weight": 10, "color": "#e0a383", "text": "#5b2a12", "desc": "Memory safe: escudo contra 1 explosão" },
+    { "id": "c", "icon": "C", "name": "C", "role": "DEV", "kind": "special", "effect": { "flag": "remote" }, "weight": 10, "color": "#a8b8cc", "text": "#1e293b", "desc": "Ponteiros: detonação manual das bombas" },
+
+    { "id": "se", "icon": "SE", "name": "Selenium", "role": "QA", "kind": "special", "effect": { "flag": "remote" }, "weight": 10, "color": "#3fae2a", "text": "#0b2a06", "desc": "Detonação remota das bombas" },
+    { "id": "cy", "icon": "CY", "name": "Cypress", "role": "QA", "kind": "attr", "effect": { "stat": "speed", "add": 1 }, "weight": 20, "color": "#6ee7b7", "text": "#064e3b", "desc": "Velocidade +1" },
+    { "id": "pw", "icon": "PW", "name": "Playwright", "role": "QA", "kind": "attr", "effect": { "stat": "range", "add": 2 }, "weight": 20, "color": "#2fb344", "text": "#052e16", "desc": "Cross-browser: alcance +2" },
+    { "id": "jt", "icon": "JT", "name": "Jest / JUnit", "role": "QA", "kind": "attr", "effect": { "stat": "bombs", "add": 1 }, "weight": 20, "color": "#c8102e", "text": "#fff1f2", "desc": "+1 bomba simultânea" },
+    { "id": "pm", "icon": "PM", "name": "Postman", "role": "QA", "kind": "special", "effect": { "flag": "kick" }, "weight": 10, "color": "#ff6c37", "text": "#3b1206", "desc": "Chuta bombas como requisições" },
+    { "id": "bug", "icon": "BUG", "name": "Bug capturado", "role": "QA", "kind": "special", "effect": { "flag": "bug" }, "weight": 10, "color": "#1b1e2b", "text": "#f43f5e", "border": "#f43f5e", "desc": "A cada 3 bugs, Relatório congela inimigos 3 s" },
+
+    { "id": "us", "icon": "US", "name": "User Story", "role": "PO", "kind": "attr", "effect": { "stat": "bombs", "add": 1 }, "weight": 20, "color": "#fde047", "text": "#3f2d00", "desc": "+1 bomba simultânea" },
+    { "id": "bl", "icon": "BL", "name": "Backlog priorizado", "role": "PO", "kind": "attr", "effect": { "stat": "range", "add": 1 }, "weight": 20, "color": "#fb923c", "text": "#431407", "desc": "Alcance +1" },
+    { "id": "sp", "icon": "SP", "name": "Sprint", "role": "PO", "kind": "attr", "effect": { "stat": "speed", "add": 1 }, "weight": 20, "color": "#38bdf8", "text": "#082f49", "desc": "Velocidade +1" },
+    { "id": "rm", "icon": "RM", "name": "Roadmap", "role": "PO", "kind": "special", "effect": { "flag": "roadmap", "duration": 5 }, "weight": 10, "color": "#a78bfa", "text": "#2e1065", "desc": "Revela itens escondidos no mapa por 5 s" },
+    { "id": "pi", "icon": "PI", "name": "Post-it", "role": "PO", "kind": "special", "effect": { "flag": "postit", "duration": 6 }, "weight": 10, "color": "#f9a8d4", "text": "#831843", "desc": "Cria um bloco temporário (barreira de 6 s)" },
+    { "id": "al", "icon": "AL", "name": "Alinhamento", "role": "PO", "kind": "special", "effect": { "flag": "align", "duration": 1.5 }, "weight": 10, "color": "#94a3b8", "text": "#1e293b", "desc": "Atordoa rivais adjacentes por 1,5 s" },
+
+    { "id": "cm", "icon": "$$", "name": "Comissão", "role": "COM", "kind": "attr", "effect": { "stat": "bombs", "add": 1 }, "weight": 20, "color": "#22c55e", "text": "#052e16", "desc": "+1 bomba simultânea" },
+    { "id": "ld", "icon": "LD", "name": "Lead quente", "role": "COM", "kind": "attr", "effect": { "stat": "range", "add": 1 }, "weight": 20, "color": "#fb7185", "text": "#4c0519", "desc": "Alcance +1" },
+    { "id": "mt", "icon": "MT", "name": "Meta batida", "role": "COM", "kind": "attr", "effect": { "stat": "speed", "add": 1 }, "weight": 20, "color": "#facc15", "text": "#3f2d00", "desc": "Velocidade +1" },
+    { "id": "ct", "icon": "CT", "name": "Contrato fechado", "role": "COM", "kind": "special", "effect": { "flag": "shield" }, "weight": 10, "color": "#e2e8f0", "text": "#1e293b", "desc": "Escudo contra 1 explosão" },
+    { "id": "fu", "icon": "FU", "name": "Follow-up", "role": "COM", "kind": "special", "effect": { "flag": "followUp" }, "weight": 10, "color": "#a3e635", "text": "#1a2e05", "desc": "A bomba explode de novo 1 s depois" },
+    { "id": "ds", "icon": "DS", "name": "Desconto", "role": "COM", "kind": "special", "effect": { "flag": "discount" }, "weight": 10, "color": "#fdba74", "text": "#431407", "desc": "Rivais atingidos pela próxima explosão perdem 1 item" },
+
+    { "id": "cf", "icon": "CF", "name": "Café", "role": "NEUTRAL", "kind": "neutral", "effect": { "flag": "coffee", "duration": 5 }, "weight": 2.5, "color": "#7c4a2d", "text": "#fde7c8", "desc": "Invencível por 5 s" },
+    { "id": "cr", "icon": "CR", "name": "Code Review", "role": "NEUTRAL", "kind": "neutral", "effect": { "flag": "codeReview", "duration": 8 }, "weight": 2.5, "color": "#14b8a6", "text": "#042f2e", "desc": "Mostra onde há itens nos blocos próximos" },
+    { "id": "xx", "icon": "XX", "name": "Bug Crítico", "role": "NEUTRAL", "kind": "neutral", "effect": { "flag": "invert", "duration": 8 }, "weight": 2.5, "color": "#1b1e2b", "text": "#f43f5e", "border": "#f43f5e", "desc": "Item ruim: inverte os controles por 8 s" },
+    { "id": "ia", "icon": "IA", "name": "Copiloto IA", "role": "NEUTRAL", "kind": "neutral", "effect": { "flag": "copilot", "duration": 10 }, "weight": 2.5, "color": "#e879f9", "text": "#4a044e", "desc": "Destaca a rota segura por 10 s (às vezes alucina)" }
+  ],
+  "dropTables": {
+    "DEV": [["js", 20], ["py", 20], ["jv", 20], ["go", 10], ["rs", 10], ["c", 10], ["cf", 2.5], ["cr", 2.5], ["xx", 2.5], ["ia", 2.5]],
+    "QA":  [["cy", 20], ["pw", 20], ["jt", 20], ["se", 10], ["pm", 10], ["bug", 10], ["cf", 2.5], ["cr", 2.5], ["xx", 2.5], ["ia", 2.5]],
+    "PO":  [["sp", 20], ["bl", 20], ["us", 20], ["rm", 10], ["pi", 10], ["al", 10], ["cf", 2.5], ["cr", 2.5], ["xx", 2.5], ["ia", 2.5]],
+    "COM": [["mt", 20], ["ld", 20], ["cm", 20], ["ct", 10], ["fu", 10], ["ds", 10], ["cf", 2.5], ["cr", 2.5], ["xx", 2.5], ["ia", 2.5]]
+  },
+  "dropChance": 0.3
+}

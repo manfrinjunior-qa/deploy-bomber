@@ -1,0 +1,81 @@
+{
+  "bosses": [
+    {
+      "id": "printer", "name": "Impressora Travada", "sprite": "printer", "resistencia": 5, "speed": 1.2,
+      "attacks": [
+        { "type": "lineBlast", "name": "Atolamento de papel", "interval": 6 },
+        { "type": "spawn", "name": "Fila de impressão", "enemy": "bug", "count": 2, "interval": 12 }
+      ]
+    },
+    {
+      "id": "emailMeeting", "name": "A Reunião que Era um E-mail", "sprite": "envelope", "resistencia": 6, "speed": 1.3,
+      "attacks": [
+        { "type": "spawn", "name": "Convite recorrente", "enemy": "meeting", "count": 2, "interval": 10 },
+        { "type": "freezeNearest", "name": "Responder a todos", "duration": 1.5, "interval": 8 }
+      ]
+    },
+    {
+      "id": "server500", "name": "Servidor 500", "sprite": "server", "resistencia": 7, "speed": 1.0,
+      "attacks": [
+        { "type": "markBlast", "name": "Internal Server Error", "tiles": 6, "delay": 1.5, "interval": 7 },
+        { "type": "spawn", "name": "Vazamento", "enemy": "leak", "count": 1, "interval": 12 }
+      ]
+    },
+    {
+      "id": "monolith", "name": "O Monolito", "sprite": "monolith", "resistencia": 8, "speed": 0.8,
+      "attacks": [
+        { "type": "swapPlayers", "name": "Acoplamento forte", "interval": 9 },
+        { "type": "wallUp", "name": "Dívida técnica", "tiles": 6, "interval": 11 }
+      ]
+    },
+    {
+      "id": "prodBug", "name": "Bug em Produção", "sprite": "bigbug", "resistencia": 10, "speed": 1.8,
+      "attacks": [
+        { "type": "spawn", "name": "Hotfix quebrado", "enemy": "bug", "count": 2, "interval": 9 },
+        { "type": "markBlast", "name": "Incêndio", "tiles": 6, "delay": 1.5, "interval": 6 },
+        { "type": "lineBlast", "name": "Rollback", "interval": 8 }
+      ]
+    },
+
+    {
+      "id": "executivo", "name": "Executivo", "sprite": "client", "variant": { "style": "combed", "skin": "#f5cba7", "hair": "#9ca3af", "shirt": "#1e3a8a", "accent": "#f8fafc", "pants": "#0f172a", "shoes": "#0b0d14", "tie": "#dc2626", "briefcase": true },
+      "arena": "Sala de Reunião", "theme": "meeting", "resistencia": 6, "speed": 1.2,
+      "attacks": [
+        { "type": "shuffleBoxes", "name": "Mudança de escopo", "interval": 20 },
+        { "type": "spawn", "name": "Reunião surpresa", "enemy": "meeting", "count": 2, "interval": 14 }
+      ]
+    },
+    {
+      "id": "startup", "name": "Startup", "sprite": "client", "variant": { "style": "beanie", "skin": "#8d5a3b", "hair": "#141414", "hat": "#141414", "shirt": "#475569", "accent": "#f8fafc", "pants": "#1e293b", "shoes": "#0b0d14", "tie": "#ef4444", "glasses": true, "briefcase": true },
+      "arena": "Coworking", "theme": "coworking", "resistencia": 7, "speed": 1.5,
+      "attacks": [
+        { "type": "invertAll", "name": "Pivot!", "duration": 5, "interval": 14 },
+        { "type": "clockRush", "name": "MVP pra ontem", "duration": 10, "interval": 18 }
+      ]
+    },
+    {
+      "id": "investidora", "name": "Investidora", "sprite": "client", "variant": { "style": "long", "skin": "#e8b48a", "hair": "#7c2d12", "shirt": "#7f1d1d", "accent": "#fbbf24", "pants": "#1e293b", "shoes": "#0b0d14", "tie": "#fbbf24" },
+      "arena": "Sala do Conselho", "theme": "board", "resistencia": 8, "speed": 1.3,
+      "attacks": [
+        { "type": "budgetCut", "name": "Corte de orçamento", "duration": 8, "interval": 15 },
+        { "type": "coinRain", "name": "Chuva de moedas", "tiles": 6, "delay": 1.6, "interval": 8 }
+      ]
+    },
+    {
+      "id": "dono", "name": "Dono da empresa", "sprite": "client", "variant": { "style": "bald", "skin": "#c98b5a", "hair": "#d1d5db", "shirt": "#1e293b", "accent": "#f8fafc", "pants": "#0b0d14", "shoes": "#0b0d14", "tie": "#dc2626", "beard": true, "briefcase": true },
+      "arena": "Cobertura", "theme": "rooftop", "resistencia": 10, "speed": 1.4, "final": true,
+      "attacks": [
+        { "type": "moveRacks", "name": "Reestruturação", "interval": 16 },
+        { "type": "cancelBonus", "name": "Bônus cancelado", "interval": 12 },
+        { "type": "coinRain", "name": "Corte de custos", "tiles": 4, "delay": 1.6, "interval": 10 }
+      ]
+    }
+  ],
+  "clientOrder": ["executivo", "startup", "investidora", "dono"],
+  "themes": {
+    "meeting":   { "floorA": "#4a3626", "floorB": "#43301f", "border": "#6b4f38", "rack": "#5b6478", "rackLight": "#7c869c" },
+    "coworking": { "floorA": "#2e2442", "floorB": "#29203b", "border": "#4c3b6e", "rack": "#4b5576", "rackLight": "#6b77a0" },
+    "board":     { "floorA": "#1b2340", "floorB": "#18203a", "border": "#3a4570", "rack": "#4a5376", "rackLight": "#c9a227" },
+    "rooftop":   { "floorA": "#24434a", "floorB": "#203d43", "border": "#3d6870", "rack": "#516476", "rackLight": "#8fb3c4" }
+  }
+}
