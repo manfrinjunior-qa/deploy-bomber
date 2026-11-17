@@ -3,6 +3,7 @@ import { ROLES } from '../core/data';
 import { save } from '../core/save';
 import { sfx } from '../core/sfx';
 import { input } from '../input/input';
+import { BRAND_BG, addLogo } from '../ui/brand';
 import { COLORS, fmt, hex, text } from '../ui/common';
 
 const MENU = [
@@ -32,11 +33,10 @@ export class TitleScene extends Phaser.Scene {
     text(this, 48, 32, `HI ${fmt(save.data.hiScore)}`, { size: 12, color: COLORS.dim });
     text(this, 1232, 32, 'v0.1 · MVP', { size: 12, color: COLORS.dim, align: 'right' });
 
-    const deploy = text(this, 64, 130, 'DEPLOY', { size: 72, color: '#fde047' });
-    deploy.setShadow(6, 6, '#c2410c', 0, false, true);
-    const bomber = text(this, 64, 220, 'BOMBER', { size: 72, color: '#f1f5f9' });
-    bomber.setShadow(6, 6, '#6d28d9', 0, false, true);
-    text(this, 66, 318, 'Exploda o backlog. Sobreviva à sexta-feira.', { font: 'body', size: 26, color: COLORS.dim });
+    // logo centrada sobre a coluna do menu (x 64..844); o fundo da cena é o da arte
+    this.cameras.main.setBackgroundColor(BRAND_BG);
+    addLogo(this, 454, 172, 300);
+    text(this, 454, 328, 'Exploda o backlog. Sobreviva à sexta-feira.', { font: 'body', size: 22, color: COLORS.dim, align: 'center' });
 
     this.cursor = this.add.graphics();
     MENU.forEach((m, i) => this.items.push(text(this, 116, 398 + i * 56, m.label, { size: 18 })));

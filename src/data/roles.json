@@ -1,51 +1,86 @@
 {
   "roles": [
     {
-      "id": "DEV", "name": "DEV", "fullName": "Desenvolvedor", "color": "#8B5CF6",
-      "speed": 3, "range": 3, "bombs": 2,
-      "bombType": "Bomba de Commit", "especialId": "refatorar", "tabelaDropId": "DEV",
+      "id": "DEV",
+      "name": "DEV",
+      "fullName": "Desenvolvedor",
+      "color": "#8B5CF6",
+      "speed": 3,
+      "range": 3,
+      "bombs": 2,
+      "bombType": "Bomba de Commit",
+      "especialId": "refatorar",
+      "tabelaDropId": "DEV",
       "finds": "Linguagens de programação",
       "variants": [
-        { "name": "Hoodie", "style": "hood", "skin": "#f5cba7", "hair": "#8B5CF6", "shirt": "#8B5CF6", "accent": "#34d399", "pants": "#1f2937", "shoes": "#e5e7eb", "glasses": true },
-        { "name": "Front-end", "style": "beanie", "skin": "#8d5a3b", "hair": "#1a1a1a", "shirt": "#7c3aed", "accent": "#f472b6", "pants": "#1f2937", "shoes": "#e5e7eb", "hat": "#ec4899" },
-        { "name": "Back-end", "style": "bald", "skin": "#d9a066", "hair": "#4a2f1b", "shirt": "#6d28d9", "accent": "#a78bfa", "pants": "#111827", "shoes": "#374151", "beard": true, "headset": true },
-        { "name": "Mobile", "style": "long", "skin": "#f5cba7", "hair": "#c2410c", "shirt": "#8B5CF6", "accent": "#fde68a", "pants": "#1f2937", "shoes": "#e5e7eb", "glasses": true }
+        { "name": "Personalizado", "style": "quiff", "skin": "#f5cba7", "hair": "#2b1a10", "outfit": "polo", "shirt": "#1e2a4a", "accent": "#3b4c7a", "pants": "#1e2a4a", "shoes": "#e5e7eb", "brows": true, "smile": true, "beard": "short" },
+        { "name": "Personalizado 2", "style": "combed", "skin": "#f5cba7", "hair": "#2b1a10", "outfit": "tee", "shirt": "#f8fafc", "accent": "#e2e8f0", "pants": "#1f2937", "shoes": "#e5e7eb", "logo": "#8B5CF6", "eyewear": "round-shades", "beard": "goatee" },
+        { "name": "Ninja", "style": "ninja", "skin": "#8d5a3b", "hair": "#2e2440", "hat": "#8B5CF6", "outfit": "tee", "shirt": "#2e2440", "accent": "#2e2440", "pants": "#221b30", "shoes": "#1a1524", "logo": "#a78bfa" },
+        { "name": "Back-end", "style": "bald", "skin": "#d9a066", "hair": "#4a2f1b", "outfit": "tee", "shirt": "#4338ca", "accent": "#4338ca", "pants": "#111827", "shoes": "#e5e7eb", "logo": "#22d3ee", "beard": "full", "headset": true },
+        { "name": "Mobile", "style": "long", "skin": "#f5cba7", "hair": "#c2410c", "outfit": "tee", "shirt": "#a78bfa", "accent": "#a78bfa", "pants": "#1f2937", "shoes": "#c7d2fe", "logo": "#f472b6", "eyewear": "clear" }
       ]
     },
     {
-      "id": "QA", "name": "QA", "fullName": "Quality Assurance", "color": "#14B8A6",
-      "speed": 4, "range": 2, "bombs": 2,
-      "bombType": "Bomba de Teste", "especialId": "reportarBug", "tabelaDropId": "QA",
+      "id": "QA",
+      "name": "QA",
+      "fullName": "Quality Assurance",
+      "color": "#14B8A6",
+      "speed": 4,
+      "range": 2,
+      "bombs": 2,
+      "bombType": "Bomba de Teste",
+      "especialId": "reportarBug",
+      "tabelaDropId": "QA",
       "finds": "Ferramentas de automação e bugs",
+      "prop": { "kind": "magnifier", "color": "#7dd3fc" },
       "variants": [
-        { "name": "Clássico", "style": "cap", "skin": "#b87a4b", "hair": "#2b1a10", "shirt": "#f8fafc", "accent": "#14B8A6", "pants": "#1e293b", "shoes": "#0f172a", "hat": "#0f9b8e" },
-        { "name": "Automação", "style": "combed", "skin": "#f5cba7", "hair": "#e8b64c", "shirt": "#14B8A6", "accent": "#f8fafc", "pants": "#1e293b", "shoes": "#0f172a", "headset": true },
-        { "name": "Exploratória", "style": "afro", "skin": "#6b4226", "hair": "#141414", "shirt": "#0d9488", "accent": "#f8fafc", "pants": "#1e293b", "shoes": "#0f172a", "glasses": true },
-        { "name": "Performance", "style": "bun", "skin": "#c68642", "hair": "#7c2d12", "shirt": "#14B8A6", "accent": "#ccfbf1", "pants": "#1e293b", "shoes": "#0f172a" }
+        { "name": "Personalizado", "style": "quiff", "skin": "#f5cba7", "hair": "#141414", "shirt": "#7f1d3a", "accent": "#5c1129", "pants": "#1e293b", "shoes": "#0f172a", "eyewear": "thick", "smile": true },
+        { "name": "Personalizado 2", "style": "shaved", "skin": "#c68642", "hair": "#141414", "shirt": "#1e2a4a", "accent": "#93c5fd", "pants": "#1f2937", "shoes": "#111827", "beard": "full" },
+        { "name": "Automação", "style": "combed", "skin": "#f5cba7", "hair": "#e8b64c", "shirt": "#f8fafc", "accent": "#2dd4bf", "pants": "#1e293b", "shoes": "#0f172a", "headset": true },
+        { "name": "Robô", "style": "robot", "skin": "#9ca3af", "hair": "#64748b", "outfit": "robot", "shirt": "#9ca3af", "accent": "#5eead4", "pants": "#94a3b8", "shoes": "#64748b" },
+        { "name": "Performance", "style": "bun", "skin": "#d9a066", "hair": "#7c2d12", "shirt": "#f8fafc", "accent": "#5eead4", "pants": "#134e4a", "shoes": "#0f172a" }
       ]
     },
     {
-      "id": "PO", "name": "PO", "fullName": "Product Owner", "color": "#F59E0B",
-      "speed": 2, "range": 3, "bombs": 3,
-      "bombType": "Bomba de Prioridade", "especialId": "repriorizar", "tabelaDropId": "PO",
+      "id": "PO",
+      "name": "PO",
+      "fullName": "Product Owner",
+      "color": "#F59E0B",
+      "speed": 2,
+      "range": 3,
+      "bombs": 3,
+      "bombType": "Bomba de Prioridade",
+      "especialId": "repriorizar",
+      "tabelaDropId": "PO",
       "finds": "Artefatos ágeis",
+      "prop": { "kind": "card", "color": "#f59e0b" },
       "variants": [
-        { "name": "Clássica", "style": "bun", "skin": "#d9a066", "hair": "#2b1a10", "shirt": "#F59E0B", "accent": "#fff7ed", "pants": "#292524", "shoes": "#1c1917" },
-        { "name": "Ágil", "style": "afro", "skin": "#6b4226", "hair": "#141414", "shirt": "#f59e0b", "accent": "#fde047", "pants": "#292524", "shoes": "#1c1917", "glasses": true },
-        { "name": "Visionário", "style": "combed", "skin": "#f5cba7", "hair": "#b45309", "shirt": "#d97706", "accent": "#fff7ed", "pants": "#292524", "shoes": "#1c1917" },
-        { "name": "Estratégica", "style": "long", "skin": "#c68642", "hair": "#e8b64c", "shirt": "#F59E0B", "accent": "#fff7ed", "pants": "#292524", "shoes": "#1c1917" }
+        { "name": "Personalizado", "style": "quiff", "skin": "#d9a066", "hair": "#141414", "outfit": "suit", "shirt": "#1e2a4a", "accent": "#f8fafc", "pants": "#111827", "shoes": "#111827", "eyewear": "thick", "beard": "full", "beardColor": "#3f2d20" },
+        { "name": "Clássica", "style": "bun", "skin": "#d9a066", "hair": "#2b1a10", "outfit": "dress", "shirt": "#f59e0b", "accent": "#fde68a", "pants": "#d9a066", "shoes": "#1c1917", "prop": { "kind": "card", "color": "#fde047" } },
+        { "name": "Roqueiro", "style": "long", "skin": "#c68642", "hair": "#141414", "outfit": "jacket", "shirt": "#1f1f1f", "accent": "#f59e0b", "pants": "#262626", "shoes": "#1c1917", "eyewear": "shades", "prop": { "kind": "guitar", "color": "#b91c1c" } },
+        { "name": "Visionário", "style": "combed", "skin": "#f5cba7", "hair": "#b45309", "shirt": "#fbbf24", "accent": "#fff7ed", "pants": "#7c2d12", "shoes": "#1c1917", "prop": { "kind": "card", "color": "#a3e635" } },
+        { "name": "Estratégica", "style": "long", "skin": "#c68642", "hair": "#e8b64c", "shirt": "#d97706", "accent": "#fff7ed", "pants": "#292524", "shoes": "#1c1917", "prop": { "kind": "card", "color": "#f9a8d4" } }
       ]
     },
     {
-      "id": "COM", "name": "COMERCIAL", "fullName": "Comercial", "color": "#EF4444",
-      "speed": 4, "range": 3, "bombs": 1,
-      "bombType": "Bomba de Proposta", "especialId": "pitch", "tabelaDropId": "COM",
+      "id": "COM",
+      "name": "COMERCIAL",
+      "fullName": "Comercial",
+      "color": "#EF4444",
+      "speed": 4,
+      "range": 3,
+      "bombs": 1,
+      "bombType": "Bomba de Proposta",
+      "especialId": "pitch",
+      "tabelaDropId": "COM",
       "finds": "Leads, propostas e comissões",
+      "prop": { "kind": "phone", "color": "#38bdf8" },
       "variants": [
-        { "name": "Executivo de contas", "style": "combed", "skin": "#f5cba7", "hair": "#2b1a10", "shirt": "#dc2626", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14", "tie": "#1e293b" },
-        { "name": "SDR", "style": "combed", "skin": "#d9a066", "hair": "#c2410c", "shirt": "#ef4444", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14", "headset": true },
-        { "name": "Key Account", "style": "long", "skin": "#6b4226", "hair": "#141414", "shirt": "#b91c1c", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14", "glasses": true, "tie": "#1e293b" },
-        { "name": "Gerente de vendas", "style": "bun", "skin": "#b87a4b", "hair": "#2b1a10", "shirt": "#EF4444", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14" }
+        { "name": "Executivo de contas", "style": "combed", "skin": "#f5cba7", "hair": "#2b1a10", "outfit": "suit", "shirt": "#dc2626", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14", "tie": "#1e293b" },
+        { "name": "SDR", "style": "combed", "skin": "#d9a066", "hair": "#c2410c", "outfit": "suit", "shirt": "#ef4444", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14", "tie": "#fde047", "headset": true },
+        { "name": "Cowboy", "style": "cowboy", "skin": "#d9a066", "hair": "#4a2f1b", "hat": "#8b5a2b", "outfit": "vest", "shirt": "#e7d3a8", "accent": "#e7d3a8", "outer": "#7c4a1e", "bandana": "#dc2626", "pants": "#1d4ed8", "shoes": "#78350f", "prop": { "kind": "lasso", "color": "#d6b47a" } },
+        { "name": "Gerente de vendas", "style": "bun", "skin": "#b87a4b", "hair": "#2b1a10", "outfit": "suit", "shirt": "#991b1b", "accent": "#f8fafc", "pants": "#111827", "shoes": "#0b0d14", "tie": "#fbbf24", "mouth": "#db2777" },
+        { "name": "Astronauta", "style": "helmet", "skin": "#f5cba7", "hair": "#2b1a10", "outfit": "spacesuit", "shirt": "#f1f5f9", "accent": "#ef4444", "pants": "#f1f5f9", "shoes": "#dc2626", "prop": null }
       ]
     }
   ],

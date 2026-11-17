@@ -8,7 +8,7 @@ import type { FloorItem } from '../entities/Item';
 import { createPlayer, speedOf, type Player, type PlayerCarry } from '../entities/Player';
 import { computeBlast, type FlameDir } from './explosions';
 import { rollDrop } from './drops';
-import { Grid, TILE } from './grid';
+import { BOX_LABELS, BOX_NEXT_STAGE, BOX_TEXT_COLOR, Grid, TILE } from './grid';
 import { applyItem, revertItem } from './items';
 import { useSpecial } from './specials';
 import { spawnEnemy, updateBoss, updateEnemies } from './ai';
@@ -461,8 +461,12 @@ export class World {
     this.events.push('boom');
   }
 
-  /** Destrói caixa/post-it. Retorna true se era caixa. O drop usa a tabela do dono (FR-005). */
-  destroyBlock(x: number, y: number, owner: number): boolean {
+  /**
+   * Golpe em caixa/post-it. Retorna true se atingiu uma caixa.
+   * Caixa TODO avança no quadro kanban (TODO → PROGRESS → DONE) e só quebra no golpe seguinte ao DONE;
+   * `force` quebra direto (caixa em chamas). O drop, na quebra, usa a tabela do dono (FR-005).
+   */
+  destroyBlock(x: number, y: number, owner: number, force = false): boolean {
     const t = this.grid.get(x, y);
     const i = this.grid.idx(x, y);
     if (t === TILE.Postit) {
@@ -471,6 +475,15 @@ export class World {
       return false;
     }
     if (t !== TILE.Box) return false;
+    const next = BOX_NEXT_STAGE[this.grid.label[i]];
+    if (next !== undefined && !force) {
+      this.grid.label[i] = next;
+      this.grid.version++;
+      const label = BOX_LABELS[next];
+      this.fx({ kind: 'puff', x, y, total: 0.25, color: '#c8925a' });
+      this.fx({ kind: 'text', x, y: y - 0.4, total: 0.8, color: BOX_TEXT_COLOR[label], text: label });
+      return true;
+    }
     this.grid.set(x, y, TILE.Floor);
     this.grid.timer[i] = 0;
     this.fx({ kind: 'puff', x, y, total: 0.35, color: '#c8925a' });
@@ -583,7 +596,7 @@ export class World {
         }
       }
     for (const b of burning) {
-      this.destroyBlock(b.x, b.y, -1);
+      this.destroyBlock(b.x, b.y, -1, true);
       this.blast(b.x, b.y, 1, -1);
     }
     if (this.cfg.stageId === 5 && this.cfg.mode !== 'client') {

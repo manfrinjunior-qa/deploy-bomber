@@ -20,6 +20,7 @@ const GAP = 12;
 const X0 = (1280 - (CARD_W * 4 + GAP * 3)) / 2;
 const Y0 = 118;
 const CARD_H = 640;
+const THUMB_GAP = 6;
 
 const MODE_LABEL: Record<GameMode, string> = {
   story: 'MODO HISTÓRIA',
@@ -68,14 +69,21 @@ export class CharacterSelectScene extends Phaser.Scene {
   private cycleRole(i: number, dir: number) {
     const s = this.slots[i];
     let idx = ROLE_ORDER.indexOf(s.role);
-    for (let k = 0; k < 4; k++) {
-      idx = (idx + dir + 4) % 4;
+    const n = ROLE_ORDER.length;
+    for (let k = 0; k < n; k++) {
+      idx = (idx + dir + n) % n;
       if (!this.taken(ROLE_ORDER[idx], i)) {
         s.role = ROLE_ORDER[idx];
         s.variant = 0;
         return;
       }
     }
+  }
+
+  private cycleVariant(i: number, dir: number) {
+    const s = this.slots[i];
+    const n = roleById(s.role).variants.length;
+    s.variant = (s.variant + dir + n) % n;
   }
 
   private join(i: number) {
@@ -110,20 +118,24 @@ export class CharacterSelectScene extends Phaser.Scene {
     add(text(this, 20, 234, `${r.fullName} · P${i + 1}`, { font: 'body', size: 17, color: COLORS.dim }));
     add(text(this, 20, 266, 'Variante', { font: 'body', size: 16, color: COLORS.dim }));
     add(text(this, CARD_W - 20, 266, r.variants[s.variant].name, { font: 'body', size: 16, bold: true, align: 'right' }));
+    // miniaturas: o tamanho se ajusta ao número de variantes para caber na largura do card
+    const n = r.variants.length;
+    const thumb = Math.min(58, Math.floor((CARD_W - 40 - THUMB_GAP * (n - 1)) / n));
     r.variants.forEach((_, k) => {
-      const x = 20 + k * 66;
+      const x = 20 + k * (thumb + THUMB_GAP);
       g.fillStyle(hex('#232737'), 1);
-      g.fillRect(x, 294, 58, 58);
+      g.fillRect(x, 294, thumb, thumb);
       if (k === s.variant) {
         g.lineStyle(3, hex(on ? r.color : COLORS.dim), 1);
-        g.strokeRect(x + 1.5, 295.5, 55, 55);
+        g.strokeRect(x + 1.5, 295.5, thumb - 3, thumb - 3);
       }
-      add(this.add.image(x + 29, 323, `face_${s.role}_${k}`).setScale(3).setAlpha(on ? 1 : 0.4));
+      add(this.add.image(x + thumb / 2, 294 + thumb / 2, `face_${s.role}_${k}`).setScale((thumb - 6) / 18).setAlpha(on ? 1 : 0.4));
     });
 
     const stats: [string, number][] = [['Velocidade', r.speed], ['Alcance', r.range], ['Bombas', r.bombs]];
+    const statsY = 294 + thumb + 18;
     stats.forEach(([label, v], k) => {
-      const y = 372 + k * 28;
+      const y = statsY + k * 28;
       add(text(this, 20, y, label, { font: 'body', size: 16, color: COLORS.dim }));
       for (let b = 0; b < 5; b++) {
         g.fillStyle(hex(b < v ? (on ? r.color : '#4b5163') : '#2a2f42'), 1);
@@ -133,7 +145,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     const sp = specialById(r.especialId);
     add(
-      text(this, 20, 462, `Bomba: ${r.bombType}\nEspecial: ${sp.name} — ${sp.efeito} (recarga ${sp.recarga} s)\nEncontra: ${r.finds}`, {
+      text(this, 20, statsY + 92, `Bomba: ${r.bombType}\nEspecial: ${sp.name} — ${sp.efeito} (recarga ${sp.recarga} s)\nEncontra: ${r.finds}`, {
         font: 'body', size: 15, color: on ? COLORS.text : COLORS.dim, wrap: CARD_W - 40,
       }),
     );
@@ -203,8 +215,8 @@ export class CharacterSelectScene extends Phaser.Scene {
       } else if (s.state === 'choosing') {
         if (input.actionPressed(i, 'up')) this.cycleRole(i, -1);
         if (input.actionPressed(i, 'down')) this.cycleRole(i, 1);
-        if (input.actionPressed(i, 'left')) s.variant = (s.variant + 3) % 4;
-        if (input.actionPressed(i, 'right')) s.variant = (s.variant + 1) % 4;
+        if (input.actionPressed(i, 'left')) this.cycleVariant(i, -1);
+        if (input.actionPressed(i, 'right')) this.cycleVariant(i, 1);
         if (input.actionPressed(i, 'bomb')) s.state = 'ready';
         else if (input.actionPressed(i, 'special')) s.state = 'off';
       } else if (input.actionPressed(i, 'special')) s.state = 'choosing';

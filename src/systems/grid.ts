@@ -10,7 +10,31 @@ export const TILE = {
 } as const;
 export type TileKind = (typeof TILE)[keyof typeof TILE];
 
-export const BOX_LABELS = ['TODO', 'FIXME', 'HACK'] as const;
+export const BOX_LABELS = ['TODO', 'FIXME', 'HACK', 'PROGRESS', 'DONE'] as const;
+export type BoxLabel = (typeof BOX_LABELS)[number];
+export const boxLabelId = (l: BoxLabel) => BOX_LABELS.indexOf(l);
+/** Rótulos sorteados em caixas novas (os demais são estágios do quadro kanban). */
+const SPAWN_LABELS = 3;
+export const randomBoxLabel = (rng: Rng) => Math.floor(rng() * SPAWN_LABELS);
+
+/** Cor do texto de cada rótulo: o estágio do kanban fica visível de longe. */
+export const BOX_TEXT_COLOR: Record<BoxLabel, string> = {
+  TODO: '#ffffff',
+  FIXME: '#ffffff',
+  HACK: '#ffffff',
+  PROGRESS: '#fde047',
+  DONE: '#4ade80',
+};
+
+/**
+ * Quadro kanban: a caixa TODO não quebra de primeira.
+ * Cada golpe avança TODO → PROGRESS → DONE, e só o golpe no DONE a destrói.
+ * Rótulos fora deste mapa (FIXME, HACK) quebram no primeiro golpe.
+ */
+export const BOX_NEXT_STAGE: Partial<Record<number, number>> = {
+  [boxLabelId('TODO')]: boxLabelId('PROGRESS'),
+  [boxLabelId('PROGRESS')]: boxLabelId('DONE'),
+};
 
 export class Grid {
   readonly tiles: Uint8Array;
@@ -40,7 +64,7 @@ export class Grid {
         if (c === '#') g.tiles[i] = TILE.Wall;
         else if (c === 'x') {
           g.tiles[i] = TILE.Box;
-          g.label[i] = Math.floor(rng() * 3);
+          g.label[i] = randomBoxLabel(rng);
           g.hasDrop[i] = rng() < DROP_CHANCE ? 1 : 0;
         } else if (c >= '1' && c <= '4') spawns[c] = { x, y };
       }

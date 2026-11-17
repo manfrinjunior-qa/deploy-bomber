@@ -2,7 +2,7 @@ import { enemyById, roleById } from '../core/data';
 import { pick, shuffle } from '../core/rng';
 import type { BossAttack, Dir, EnemyType } from '../core/types';
 import type { Boss, Enemy, Mover } from '../entities/Enemy';
-import { TILE } from './grid';
+import { TILE, randomBoxLabel } from './grid';
 import { DIRS4, type World } from './world';
 
 const MAX_ENEMIES = 16;
@@ -284,7 +284,7 @@ function doAttack(w: World, b: Boss, a: BossAttack) {
       for (const t of tiles.slice(0, a.tiles ?? 6)) {
         g.set(t.x, t.y, TILE.Box);
         const i = g.idx(t.x, t.y);
-        g.label[i] = Math.floor(w.rng() * 3);
+        g.label[i] = randomBoxLabel(w.rng);
         g.hasDrop[i] = w.rng() < 0.3 ? 1 : 0;
       }
       say('novos blocos de dívida técnica');

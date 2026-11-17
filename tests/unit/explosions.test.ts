@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeBlast } from '../../src/systems/explosions';
-import { Grid, TILE } from '../../src/systems/grid';
+import { BOX_LABELS, Grid, TILE, boxLabelId } from '../../src/systems/grid';
 import { World } from '../../src/systems/world';
 import { makeRng } from '../../src/core/rng';
 import { STAGES } from '../../src/core/data';
@@ -120,5 +120,71 @@ describe('bombas no mundo', () => {
     w.blast(4, 3, 2, -1);
     w.update(0.016, []);
     expect(w.outcome).toBe('draw');
+  });
+});
+
+describe('caixas TODO: quadro kanban', () => {
+  const BX = 7;
+  const BY = 5;
+  const setup = (label: (typeof BOX_LABELS)[number], drop = 0) => {
+    const w = world();
+    const i = w.grid.idx(BX, BY);
+    w.grid.label[i] = boxLabelId(label);
+    w.grid.hasDrop[i] = drop;
+    return { w, i, label: () => BOX_LABELS[w.grid.label[i]], tile: () => w.grid.get(BX, BY) };
+  };
+
+  it('TODO → PROGRESS → DONE → quebra, uma explosão por estágio', () => {
+    const { w, label, tile } = setup('TODO');
+    w.blast(5, 5, 3, 0);
+    expect([tile(), label()]).toEqual([TILE.Box, 'PROGRESS']);
+    w.blast(5, 5, 3, 0);
+    expect([tile(), label()]).toEqual([TILE.Box, 'DONE']);
+    w.blast(5, 5, 3, 0);
+    expect(tile()).toBe(TILE.Floor);
+  });
+
+  it('a caixa segura a explosão em todos os estágios (o fogo não atravessa)', () => {
+    const { w } = setup('TODO');
+    for (let k = 0; k < 2; k++) {
+      w.blast(5, 5, 8, 0);
+      expect(w.flames.some((f) => f.x === BX + 1 && f.y === BY)).toBe(false);
+    }
+  });
+
+  it('o item só cai quando a caixa quebra de verdade', () => {
+    const { w } = setup('TODO', 1);
+    w.blast(5, 5, 3, 0);
+    w.blast(5, 5, 3, 0);
+    expect(w.items.length).toBe(0);
+    w.blast(5, 5, 3, 0);
+    expect(w.items.length).toBe(1);
+  });
+
+  it('cada golpe vale +100 (TODO rende 300 no total)', () => {
+    const { w } = setup('TODO');
+    const p = w.players[0];
+    const before = p.score;
+    for (let k = 0; k < 3; k++) w.blast(5, 5, 3, 0);
+    expect(p.score - before).toBe(300);
+  });
+
+  it.each(['FIXME', 'HACK'] as const)('%s quebra na primeira explosão', (l) => {
+    const { w, tile } = setup(l);
+    w.blast(5, 5, 3, 0);
+    expect(tile()).toBe(TILE.Floor);
+  });
+
+  it('caixa em chamas (fase 5) queima inteira, mesmo sendo TODO', () => {
+    const { w, tile } = setup('TODO');
+    w.destroyBlock(BX, BY, -1, true);
+    expect(tile()).toBe(TILE.Floor);
+  });
+
+  it('caixas novas nunca nascem já em PROGRESS ou DONE', () => {
+    const g = Grid.fromMap(Array(11).fill('x'.repeat(15)), makeRng(7));
+    const labels = new Set(Array.from(g.label));
+    expect(labels.has(boxLabelId('PROGRESS'))).toBe(false);
+    expect(labels.has(boxLabelId('DONE'))).toBe(false);
   });
 });

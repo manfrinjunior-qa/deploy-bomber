@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
 import { BOSSES, CLIENT_THEMES, ENEMIES, ITEMS, ROLES, STAGES } from '../core/data';
 import type { Theme } from '../core/types';
-import { BOX_LABELS } from '../systems/grid';
-import { drawBomb, drawBoss, drawCharacter, drawEnemy, itemIcon, tileBox, tileDeadline, tileFloor, tilePostit, tileRack } from './art';
+import { BOX_LABELS, BOX_TEXT_COLOR } from '../systems/grid';
+import { drawBomb, drawBoss, drawEnemy, itemIcon, tileBox, tileDeadline, tileFloor, tilePostit, tileRack } from './art';
+import { FACE_ROWS, drawCharacter, resolveLook } from './characters';
 import { Pix } from './pixel';
 
 export function themeKey(t: Theme) {
@@ -16,13 +17,15 @@ export function registerTextures(scene: Phaser.Scene) {
     if (!tx.exists(key)) tx.addCanvas(key, cv);
   };
 
-  for (const r of ROLES)
+  for (const r of ROLES) {
     r.variants.forEach((v, i) => {
-      for (let f = 0; f < 3; f++) add(`char_${r.id}_${i}_${f}`, drawCharacter(v, f).toCanvas());
-      add(`face_${r.id}_${i}`, drawCharacter(v, 0).toCanvas(1, [0, 11]));
-      add(`bomb_${r.id}_0`, drawBomb(r.color, 0).toCanvas());
-      add(`bomb_${r.id}_1`, drawBomb(r.color, 1).toCanvas());
+      const look = resolveLook(r, v);
+      for (let f = 0; f < 3; f++) add(`char_${r.id}_${i}_${f}`, drawCharacter(look, f).toCanvas());
+      add(`face_${r.id}_${i}`, drawCharacter(look, 0).toCanvas(1, FACE_ROWS));
     });
+    add(`bomb_${r.id}_0`, drawBomb(r.color, 0).toCanvas());
+    add(`bomb_${r.id}_1`, drawBomb(r.color, 1).toCanvas());
+  }
   add('bomb_none_0', drawBomb('#94a3b8', 0).toCanvas());
   add('bomb_none_1', drawBomb('#94a3b8', 1).toCanvas());
   add('bomb_coin_0', drawBomb('#fde047', 0, true).toCanvas());
@@ -34,7 +37,7 @@ export function registerTextures(scene: Phaser.Scene) {
     for (let f = 0; f < 2; f++) {
       const pix = b.sprite === 'client' && b.variant ? drawCharacter(b.variant, f ? 1 : 2) : drawBoss(b.sprite, f);
       add(`boss_${b.id}_${f}`, pix.toCanvas());
-      if (b.sprite === 'client' && b.variant) add(`bossface_${b.id}`, drawCharacter(b.variant, 0).toCanvas(1, [0, 11]));
+      if (b.sprite === 'client' && b.variant) add(`bossface_${b.id}`, drawCharacter(b.variant, 0).toCanvas(1, FACE_ROWS));
     }
 
   const themes: Theme[] = [...STAGES.map((s) => s.theme), ...Object.values(CLIENT_THEMES)];
@@ -47,8 +50,8 @@ export function registerTextures(scene: Phaser.Scene) {
   }
   add('rack_title', tileRack('#4a5375', '#6c789e'));
   for (const l of BOX_LABELS) {
-    add(`box_${l}`, tileBox(l));
-    add(`box_${l}_burn`, tileBox(l, true));
+    add(`box_${l}`, tileBox(l, false, BOX_TEXT_COLOR[l]));
+    add(`box_${l}_burn`, tileBox(l, true, BOX_TEXT_COLOR[l]));
   }
   add('postit', tilePostit());
   add('deadline', tileDeadline());

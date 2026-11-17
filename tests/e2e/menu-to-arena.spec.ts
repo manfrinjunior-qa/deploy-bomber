@@ -43,3 +43,25 @@ test('menu → seleção → arena com 2 jogadores no mesmo teclado', async ({ p
   expect((await world()).y).toBeGreaterThan(1);
   expect(errors).toEqual([]);
 });
+
+test('seleção: esquerda/direita percorrem as 5 variantes e voltam ao Personalizado', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await expect.poll(() => activeScene(page), { timeout: 15_000 }).toBe('Title');
+  await page.keyboard.press('Enter');
+  await expect.poll(() => activeScene(page)).toBe('CharacterSelect');
+
+  const variant = () => page.evaluate(() => (window as unknown as G).__game.scene.getScene('CharacterSelect').slots[0].variant);
+  expect(await variant()).toBe(0);
+  const seen: number[] = [];
+  for (let k = 0; k < 5; k++) {
+    await page.keyboard.press('KeyD');
+    await expect.poll(variant).toBe((k + 1) % 5);
+    seen.push(await variant());
+  }
+  expect(seen).toEqual([1, 2, 3, 4, 0]);
+  await page.keyboard.press('KeyA');
+  await expect.poll(variant).toBe(4); // volta pela esquerda até o Astronauta/Mobile
+  expect(errors).toEqual([]);
+});

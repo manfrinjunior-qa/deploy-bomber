@@ -10,6 +10,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "gen:stages": "node scripts/generate-stages.mjs",
+    "gen:brand": "node scripts/generate-brand.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {

@@ -1,4 +1,3 @@
-import type { VariantDef } from '../core/types';
 import { Pix, canvas, shade } from './pixel';
 
 export const PIXEL_FONT = '"Press Start 2P", monospace';
@@ -6,139 +5,6 @@ export const BODY_FONT = '"Space Grotesk", sans-serif';
 export const TILE_PX = 56;
 
 const INK = '#0b0d14';
-
-// ───────────────────────────── personagens (16×16 + contorno)
-export function drawCharacter(v: VariantDef, frame = 0): Pix {
-  const p = new Pix(18, 18, 1, 1);
-  const skin = v.skin;
-  const skinD = shade(skin, -0.18);
-  const hair = v.hair;
-  const hairL = shade(hair, 0.18);
-
-  // pernas e sapatos (frame anima a caminhada)
-  const lUp = frame === 1 ? 1 : 0;
-  const rUp = frame === 2 ? 1 : 0;
-  p.rect(5, 13, 2, 2 - lUp, v.pants);
-  p.rect(9, 13, 2, 2 - rUp, v.pants);
-  p.rect(5, 15 - lUp, 2, 1, v.shoes);
-  p.rect(9, 15 - rUp, 2, 1, v.shoes);
-
-  // tronco e braços
-  const shirtD = shade(v.shirt, -0.2);
-  p.rect(4, 9, 8, 4, v.shirt);
-  p.rect(11, 9, 1, 4, shirtD);
-  p.rect(3, 9, 1, 3, v.shirt);
-  p.rect(12, 9, 1, 3, shirtD);
-  p.px(3, 12, skin);
-  p.px(12, 12, skin);
-  if (v.tie) {
-    p.rect(6, 9, 4, 1, v.accent);
-    p.rect(7, 9, 2, 4, v.tie);
-  } else {
-    p.rect(6, 10, 4, 1, v.accent);
-    p.rect(7, 9, 2, 1, v.accent);
-  }
-  if (v.briefcase) p.rect(13, 10, 2, 3, '#b45309');
-
-  // cabeça
-  p.rect(3, 2, 10, 7, skin);
-  p.rect(12, 3, 1, 6, skinD);
-  p.rect(4, 8, 8, 1, skinD);
-
-  // cabelo / chapéu
-  switch (v.style) {
-    case 'hood': {
-      const h = v.shirt;
-      const hd = shade(h, -0.25);
-      p.rect(2, 1, 12, 3, h);
-      p.rect(2, 4, 1, 6, h);
-      p.rect(13, 4, 1, 6, hd);
-      p.rect(3, 3, 10, 1, hd);
-      p.rect(4, 1, 6, 1, shade(h, 0.2));
-      break;
-    }
-    case 'beanie': {
-      const h = v.hat ?? hair;
-      p.rect(2, 3, 1, 4, hair);
-      p.rect(13, 3, 1, 4, hair);
-      p.rect(3, 0, 10, 3, h);
-      p.rect(3, 2, 10, 1, shade(h, -0.25));
-      p.rect(4, 1, 1, 1, shade(h, 0.3));
-      p.rect(7, 1, 1, 1, shade(h, 0.3));
-      p.rect(10, 1, 1, 1, shade(h, 0.3));
-      break;
-    }
-    case 'bald':
-      p.rect(4, 1, 8, 1, skin);
-      p.px(6, 2, shade(skin, 0.35));
-      p.rect(2, 4, 1, 3, hair);
-      p.rect(13, 4, 1, 3, hair);
-      break;
-    case 'long':
-      p.rect(3, 1, 10, 2, hair);
-      p.rect(2, 2, 1, 9, hair);
-      p.rect(13, 2, 1, 9, shade(hair, -0.2));
-      p.rect(3, 3, 3, 1, hair);
-      p.rect(4, 1, 3, 1, hairL);
-      break;
-    case 'cap': {
-      const h = v.hat ?? '#0f9b8e';
-      p.rect(2, 4, 1, 3, hair);
-      p.rect(13, 4, 1, 3, hair);
-      p.rect(3, 0, 10, 3, h);
-      p.rect(2, 3, 12, 1, shade(h, -0.3));
-      p.rect(7, 1, 2, 1, '#f8fafc');
-      break;
-    }
-    case 'bun':
-      p.rect(3, 1, 10, 2, hair);
-      p.rect(6, 0, 4, 1, hair);
-      p.rect(7, -1, 2, 1, hair);
-      p.rect(2, 3, 1, 4, hair);
-      p.rect(13, 3, 1, 4, shade(hair, -0.2));
-      p.rect(4, 1, 2, 1, hairL);
-      break;
-    case 'afro':
-      p.rect(2, 0, 12, 3, hair);
-      p.rect(1, 2, 2, 6, hair);
-      p.rect(13, 2, 2, 6, shade(hair, -0.2));
-      p.rect(4, 0, 3, 1, hairL);
-      break;
-    case 'combed':
-    default:
-      p.rect(3, 1, 10, 2, hair);
-      p.rect(3, 3, 4, 1, hair);
-      p.rect(2, 2, 1, 4, hair);
-      p.rect(13, 2, 1, 4, shade(hair, -0.2));
-      p.rect(8, 1, 3, 1, hairL);
-      break;
-  }
-
-  // rosto
-  if (v.glasses) {
-    p.rect(4, 4, 3, 3, '#e5e7eb');
-    p.rect(9, 4, 3, 3, '#e5e7eb');
-    p.rect(7, 5, 2, 1, '#e5e7eb');
-  }
-  p.rect(5, 5, 2, 2, INK);
-  p.rect(9, 5, 2, 2, INK);
-  p.px(6, 5, '#ffffff');
-  p.px(10, 5, '#ffffff');
-  if (v.beard) p.rect(4, 7, 8, 2, hair === '#d1d5db' ? '#e5e7eb' : hair);
-  else {
-    p.px(4, 7, '#f19a9a');
-    p.px(11, 7, '#f19a9a');
-  }
-  p.rect(7, 7, 2, 1, '#9b2c2c');
-  if (v.headset) {
-    p.rect(3, 0, 10, 1, '#111827');
-    p.rect(2, 3, 1, 4, '#111827');
-    p.rect(13, 3, 1, 4, '#111827');
-    p.rect(3, 7, 2, 1, '#111827');
-    p.px(5, 7, '#38bdf8');
-  }
-  return p.outline(INK);
-}
 
 // ───────────────────────────── inimigos
 export function drawEnemy(type: string, frame = 0): Pix {
@@ -332,7 +198,7 @@ export function tileRack(rack: string, light: string): HTMLCanvasElement {
   return cv;
 }
 
-export function tileBox(label: string, burning = false): HTMLCanvasElement {
+export function tileBox(label: string, burning = false, textColor = '#ffffff'): HTMLCanvasElement {
   const [cv, ctx] = canvas(TILE_PX, TILE_PX);
   ctx.fillStyle = '#7a4a22';
   ctx.fillRect(2, 2, 52, 52);
@@ -343,14 +209,19 @@ export function tileBox(label: string, burning = false): HTMLCanvasElement {
   ctx.fillRect(4, 4, 48, 4);
   ctx.fillStyle = '#e8bd85';
   ctx.fillRect(24, 4, 8, 46);
+  // rótulos longos (PROGRESS) quebram em duas linhas para não encolher a fonte
+  const lines = label.length > 5 ? [label.slice(0, Math.ceil(label.length / 2)), label.slice(Math.ceil(label.length / 2))] : [label];
   ctx.font = `${label.length > 4 ? 8 : 10}px ${PIXEL_FONT}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.lineWidth = 4;
   ctx.strokeStyle = '#5b2a12';
-  ctx.strokeText(label, 28, 29);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText(label, 28, 29);
+  lines.forEach((l, k) => {
+    const y = 29 + (k - (lines.length - 1) / 2) * 12;
+    ctx.strokeText(l, 28, y);
+    ctx.fillStyle = textColor;
+    ctx.fillText(l, 28, y);
+  });
   if (burning) {
     ctx.fillStyle = '#f97316';
     ctx.fillRect(6, 0, 8, 8); ctx.fillRect(22, 0, 10, 6); ctx.fillRect(42, 2, 8, 8);

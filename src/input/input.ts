@@ -17,6 +17,8 @@ class InputManager {
   private downAt = new Map<string, number>(); // ordem em que as teclas foram apertadas
   private seq = 0;
   private pressedNow = new Set<string>();
+  /** toques repetidos da mesma tecla no mesmo frame vão para o frame seguinte, para nenhum se perder */
+  private pressedNext = new Set<string>();
   private pressedFrame = new Set<string>();
   pads: (PadState | null)[] = [null, null, null, null];
   capture: ((code: string) => void) | null = null;
@@ -35,7 +37,7 @@ class InputManager {
       if (e.repeat && this.down.has(e.code)) return;
       if (!this.down.has(e.code)) this.downAt.set(e.code, ++this.seq);
       this.down.add(e.code);
-      this.pressedNow.add(e.code);
+      (this.pressedNow.has(e.code) ? this.pressedNext : this.pressedNow).add(e.code);
     });
     window.addEventListener('keyup', (e) => this.down.delete(e.code));
     window.addEventListener('blur', () => this.down.clear());
@@ -44,7 +46,8 @@ class InputManager {
   /** Chamar no começo do update de cada cena. */
   beginFrame() {
     this.pressedFrame = this.pressedNow;
-    this.pressedNow = new Set();
+    this.pressedNow = this.pressedNext;
+    this.pressedNext = new Set();
     this.pads = readPads();
   }
 
@@ -53,6 +56,10 @@ class InputManager {
   }
   pressed(...codes: string[]) {
     return codes.some((c) => this.pressedFrame.has(c));
+  }
+  /** Alguma tecla ou botão de gamepad foi apertado neste frame. */
+  anyPressed() {
+    return this.pressedFrame.size > 0 || this.anyPad((p) => p.bombPressed || p.specialPressed || p.startPressed);
   }
   anyDown(codes: string[]) {
     return codes.some((c) => this.down.has(c));

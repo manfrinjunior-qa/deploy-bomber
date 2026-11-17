@@ -10,7 +10,7 @@ Status em 12/11/2026.
 
 ## M2 — 4 jogadores e papéis
 - [x] 4 mapas de teclas padrão e tela de remapeamento (Opções, salvo em localStorage)
-- [x] Tela de seleção com os 4 papéis, 4 variantes de visual e atributos base
+- [x] Tela de seleção com os 4 papéis, 5 variantes de visual cada (Spec V2: Personalizado como padrão) e atributos base
 - [x] Habilidades especiais com recarga no HUD
 - [x] Modo Batalha Local (3 vidas, vence o último de pé, empate no mesmo frame)
 - [x] Gamepads como alternativa

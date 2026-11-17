@@ -2,21 +2,49 @@ export type RoleId = 'DEV' | 'QA' | 'PO' | 'COM';
 export type StatId = 'speed' | 'range' | 'bombs';
 export type Dir = { x: number; y: number };
 
-export interface VariantDef {
-  name: string;
-  style: string;
+/** Cabelo ou cobertura da cabeça (ninja, robô e capacete substituem a cabeça inteira). */
+export type HeadStyle =
+  | 'quiff' | 'combed' | 'shaved' | 'bald' | 'long' | 'bun' | 'afro'
+  | 'hood' | 'beanie' | 'cap' | 'cowboy' | 'ninja' | 'robot' | 'helmet';
+export type Eyewear = 'clear' | 'thick' | 'shades' | 'round-shades';
+export type FacialHair = 'full' | 'short' | 'goatee';
+export type Outfit = 'shirt' | 'polo' | 'tee' | 'suit' | 'dress' | 'jacket' | 'vest' | 'spacesuit' | 'robot';
+export type PropKind = 'magnifier' | 'card' | 'phone' | 'guitar' | 'briefcase' | 'lasso';
+
+/** Objeto que o personagem segura na mão direita. */
+export interface PropDef {
+  kind: PropKind;
+  color: string;
+}
+
+/** Aparência de um personagem 16×16 (jogadores e chefões do Cliente). */
+export interface CharacterLook {
+  style: HeadStyle;
   skin: string;
   hair: string;
   shirt: string;
   accent: string;
   pants: string;
   shoes: string;
-  hat?: string;
-  glasses?: boolean;
+  outfit?: Outfit; // padrão: 'shirt'
+  outer?: string; // colete / jaqueta
+  hat?: string; // cor de gorro, boné, chapéu ou faixa do ninja
+  eyewear?: Eyewear;
+  brows?: boolean; // sobrancelhas grossas
+  smile?: boolean; // sorriso aberto com dentes
+  mouth?: string;
+  beard?: FacialHair;
+  beardColor?: string; // padrão: cor do cabelo
   headset?: boolean;
-  beard?: boolean;
   tie?: string;
-  briefcase?: boolean;
+  bandana?: string;
+  logo?: string; // estampa no peito
+  /** undefined = usa o objeto do papel; null = mãos vazias */
+  prop?: PropDef | null;
+}
+
+export interface VariantDef extends CharacterLook {
+  name: string;
 }
 
 export interface RoleDef {
@@ -31,6 +59,9 @@ export interface RoleDef {
   especialId: string;
   tabelaDropId: RoleId;
   finds: string;
+  /** objeto padrão na mão de todas as variantes do papel */
+  prop?: PropDef;
+  /** a primeira variante é a padrão (Personalizado) */
   variants: VariantDef[];
 }
 
@@ -121,7 +152,7 @@ export interface BossDef {
   id: string;
   name: string;
   sprite: string;
-  variant?: VariantDef;
+  variant?: CharacterLook;
   arena?: string;
   theme?: string;
   resistencia: number;

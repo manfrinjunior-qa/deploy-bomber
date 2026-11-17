@@ -59,16 +59,17 @@ itens até o máximo de 8.
 
 **Variantes de visual**
 
-Cada papel tem 4 variantes de visual (cabelo, tom de pele, acessório e
+Cada papel tem 4 variantes de visual, e DEV, QA e PO têm também um
+avatar personalizado, que é o padrão (cabelo, tom de pele, acessório e
 cores da roupa). A variante é só estética: atributos, bomba e especial
 não mudam.
 
-| Papel     | Variante 1                            | Variante 2                       | Variante 3                           | Variante 4                        |
-|-----------|---------------------------------------|----------------------------------|--------------------------------------|-----------------------------------|
-| DEV       | Hoodie (capuz e óculos)               | Front-end (gorro e cabelo black) | Back-end (careca, barba e fone)      | Mobile (cabelo longo e óculos)    |
-| QA        | Clássico (boné)                       | Automação (fone)                 | Exploratória (cabelo black e óculos) | Performance (coque)               |
-| PO        | Clássica (coque)                      | Ágil (óculos)                    | Visionário (cabelo penteado)         | Estratégica (cabelo longo)        |
-| Comercial | Executivo de contas (cabelo penteado) | SDR (headset)                    | Key Account (cabelo longo e óculos)  | Gerente de vendas (mulher, coque) |
+| Papel     | Personalizado                                                                                                                 | Variante 1                                                                      | Variante 2                                                              | Variante 3                                        | Variante 4                                                                                 |
+|-----------|-------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|-------------------------------------------------------------------------|---------------------------------------------------|--------------------------------------------------------------------------------------------|
+| DEV       | Topete escuro, sobrancelhas grossas, barba curta, sorriso aberto e camisa polo azul-marinho (padrão)                          | Personalizado 2 (óculos escuros redondos, bigode, cavanhaque e camiseta branca) | Ninja (capuz, máscara e faixa roxa)                                     | Back-end (careca, barba e fone)                   | Mobile (cabelo longo e óculos)                                                             |
+| QA        | Cabelo preto curto com topete, óculos de grau de armação preta, sem barba, pele clara, sorriso aberto e camisa vinho (padrão) | Personalizado 2 (cabelo raspado em degradê, barba e camisa social azul-marinho) | Automação (fone)                                                        | Robô (cabeça de metal com antena e tela no rosto) | Performance (coque)                                                                        |
+| PO        | Cabelo curto preto, óculos, barba curta e terno escuro (padrão)                                                               | Clássica (coque e vestido âmbar)                                                | Roqueiro (cabelo comprido, óculos escuros, jaqueta de couro e guitarra) | Visionário (cabelo penteado)                      | Estratégica (cabelo longo)                                                                 |
+| Comercial | —                                                                                                                             | Executivo de contas (cabelo penteado)                                           | SDR (headset)                                                           | Cowboy (chapéu, bandana vermelha, colete e laço)  | Gerente de vendas (mulher, coque); extra: Astronauta (traje branco com detalhes vermelhos) |
 
 **Controles no mesmo teclado**
 
@@ -216,21 +217,21 @@ enfrentam os chefões em sequência, cada um na sua arena.
 
 **Requisitos funcionais**
 
-| ID     | Requisito                                                                                                      |
-|--------|----------------------------------------------------------------------------------------------------------------|
-| FR-001 | O jogo suporta 1 a 4 jogadores locais, cada um com seu conjunto de teclas.                                     |
-| FR-002 | Cada jogador escolhe um papel único (DEV, QA, PO, Comercial) e uma das 4 variantes de visual antes da partida. |
-| FR-003 | Uma bomba explode 3 s após ser colocada, em cruz, com o alcance do dono.                                       |
-| FR-004 | Explosões encadeiam outras bombas no alcance.                                                                  |
-| FR-005 | O drop de item usa a tabela do papel do dono da bomba que destruiu o bloco.                                    |
-| FR-006 | Qualquer jogador pode pegar qualquer item; o efeito vale para quem pegou.                                      |
-| FR-007 | Cada papel tem uma habilidade especial com recarga exibida no HUD.                                             |
-| FR-008 | O HUD mostra, por jogador: vidas, pontuação e itens ativos; ao centro, tempo e fase.                           |
-| FR-009 | Modo História: jogadores cooperam; a arena termina quando todos os inimigos caem.                              |
-| FR-010 | Modo Batalha: vence o último jogador vivo; empate se todos caem no mesmo frame.                                |
-| FR-011 | Cada fase termina com um chefão com padrão de ataque próprio.                                                  |
-| FR-012 | As teclas de cada jogador podem ser remapeadas e salvas localmente.                                            |
-| FR-013 | O progresso do Modo História (fases liberadas, recorde) é salvo localmente.                                    |
+| ID     | Requisito                                                                                                    |
+|--------|--------------------------------------------------------------------------------------------------------------|
+| FR-001 | O jogo suporta 1 a 4 jogadores locais, cada um com seu conjunto de teclas.                                   |
+| FR-002 | Cada jogador escolhe um papel único (DEV, QA, PO, Comercial) e uma das variantes de visual antes da partida. |
+| FR-003 | Uma bomba explode 3 s após ser colocada, em cruz, com o alcance do dono.                                     |
+| FR-004 | Explosões encadeiam outras bombas no alcance.                                                                |
+| FR-005 | O drop de item usa a tabela do papel do dono da bomba que destruiu o bloco.                                  |
+| FR-006 | Qualquer jogador pode pegar qualquer item; o efeito vale para quem pegou.                                    |
+| FR-007 | Cada papel tem uma habilidade especial com recarga exibida no HUD.                                           |
+| FR-008 | O HUD mostra, por jogador: vidas, pontuação e itens ativos; ao centro, tempo e fase.                         |
+| FR-009 | Modo História: jogadores cooperam; a arena termina quando todos os inimigos caem.                            |
+| FR-010 | Modo Batalha: vence o último jogador vivo; empate se todos caem no mesmo frame.                              |
+| FR-011 | Cada fase termina com um chefão com padrão de ataque próprio.                                                |
+| FR-012 | As teclas de cada jogador podem ser remapeadas e salvas localmente.                                          |
+| FR-013 | O progresso do Modo História (fases liberadas, recorde) é salvo localmente.                                  |
 
 **Requisitos não funcionais**
 
