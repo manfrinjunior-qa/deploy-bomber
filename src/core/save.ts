@@ -7,6 +7,9 @@ export interface SaveData {
   hiScore: number;
   bestStage: number;
   clientCleared: boolean;
+  /** Modo Zumbi: maior noite liberada (1..5) e se as 5 noites foram vencidas */
+  zombieUnlocked: number;
+  zombieCleared: boolean;
   keymaps: KeyMap[];
   sound: boolean;
 }
@@ -14,7 +17,10 @@ export interface SaveData {
 const KEY = 'deploy-bomber-save-v1';
 
 function defaults(): SaveData {
-  return { version: 1, unlocked: 1, hiScore: 0, bestStage: 0, clientCleared: false, keymaps: cloneKeymaps(DEFAULT_KEYMAPS), sound: true };
+  return {
+    version: 1, unlocked: 1, hiScore: 0, bestStage: 0, clientCleared: false, zombieUnlocked: 1, zombieCleared: false,
+    keymaps: cloneKeymaps(DEFAULT_KEYMAPS), sound: true,
+  };
 }
 
 function load(): SaveData {
@@ -40,6 +46,10 @@ export const save = {
   },
   unlock(stage: number) {
     if (stage > this.data.unlocked) this.data.unlocked = Math.min(5, stage);
+    this.write();
+  },
+  unlockNight(night: number) {
+    if (night > this.data.zombieUnlocked) this.data.zombieUnlocked = Math.min(5, night);
     this.write();
   },
   submitScore(score: number) {

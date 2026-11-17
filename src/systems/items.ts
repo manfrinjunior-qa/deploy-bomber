@@ -4,7 +4,7 @@ import { TILE } from './grid';
 import type { World } from './world';
 
 /** Itens com efeito permanente ficam listados no HUD; os temporários aparecem pelos timers. */
-const PERMANENT_FLAGS = new Set(['shield', 'kick', 'remote', 'go', 'followUp', 'discount', 'bug']);
+const PERMANENT_FLAGS = new Set(['shield', 'kick', 'remote', 'go', 'followUp', 'discount', 'bug', 'holy', 'silver']);
 
 export function applyItem(w: World, p: Player, id: string) {
   const def = itemById(id);
@@ -62,6 +62,19 @@ export function applyItem(w: World, p: Player, id: string) {
     case 'copilot':
       p.copilot = e.duration ?? 10;
       p.hallucinate = w.rng() < 0.2;
+      break;
+    // itens da noite (Modo Zumbi)
+    case 'candy':
+      p.candy = e.duration ?? 8;
+      break;
+    case 'lantern':
+      w.lanternT = Math.max(w.lanternT, e.duration ?? 10);
+      break;
+    case 'holy':
+      p.holy++;
+      break;
+    case 'silver':
+      p.silver = true;
       break;
   }
   w.sayP(p, `coletou ${def.name.toUpperCase()}`, def.desc.toLowerCase());
@@ -150,6 +163,18 @@ export function revertItem(w: World, p: Player): string | null {
     case 'bug':
       p.bugs = Math.max(0, p.bugs - 1);
       break;
+    case 'holy':
+      p.holy = Math.max(0, p.holy - 1);
+      break;
+    case 'silver':
+      p.silver = has('bp');
+      break;
   }
   return def.name;
+}
+
+/** Remove do HUD um item consumido (Água benta usada, Bala de prata disparada). */
+export function consumeItem(p: Player, id: string) {
+  const i = p.items.lastIndexOf(id);
+  if (i >= 0) p.items.splice(i, 1);
 }

@@ -3,6 +3,13 @@
     { "id": "bug", "name": "Bug", "vida": 1, "speed": 2.2, "touch": "damage", "score": 100, "ia": "wander" },
     { "id": "meeting", "name": "Reunião", "vida": 1, "speed": 1.4, "touch": "freeze", "freeze": 2, "score": 150, "ia": "wander" },
     { "id": "leak", "name": "Memory Leak", "vida": 1, "speed": 1.8, "touch": "damage", "splitAfter": 10, "score": 120, "ia": "wander" },
-    { "id": "merge", "name": "Merge Conflict", "vida": 1, "speed": 2.0, "touch": "swap", "score": 200, "ia": "chase" }
+    { "id": "merge", "name": "Merge Conflict", "vida": 1, "speed": 2.0, "touch": "swap", "score": 200, "ia": "chase" },
+
+    { "id": "zombie", "name": "Zumbi comum", "vida": 1, "speed": 1.3, "touch": "bite", "score": 120, "ia": "chase", "chase": 0.3, "zombie": true },
+    { "id": "runner", "name": "Zumbi corredor", "vida": 1, "speed": 2.6, "touch": "bite", "score": 150, "ia": "chase", "chase": 0.45, "zombie": true },
+    { "id": "office", "name": "Zumbi de escritório", "vida": 2, "speed": 1.5, "touch": "bite", "score": 200, "ia": "chase", "chase": 0.35, "zombie": true },
+    { "id": "ghost", "name": "Fantasma", "vida": 1, "speed": 1.4, "touch": "scare", "freeze": 2, "score": 180, "ia": "chase", "chase": 0.4, "fly": true, "hidden": true },
+    { "id": "poltergeist", "name": "Poltergeist", "vida": 1, "speed": 1.6, "touch": "scare", "freeze": 2, "score": 220, "ia": "wander", "fly": true, "hidden": true, "poltergeist": true },
+    { "id": "bat", "name": "Morcego", "vida": 1, "speed": 2.4, "touch": "damage", "score": 130, "ia": "wander", "fly": true, "swoop": true }
   ]
 }

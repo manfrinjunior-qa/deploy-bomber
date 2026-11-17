@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
-import { BOSSES, CLIENT_THEMES, ENEMIES, ITEMS, ROLES, STAGES } from '../core/data';
+import { BOSSES, CLIENT_THEMES, ENEMIES, ITEMS, NIGHTS, ROLES, STAGES, ZOMBIE_SPRITES } from '../core/data';
 import type { Theme } from '../core/types';
 import { BOX_LABELS, BOX_TEXT_COLOR } from '../systems/grid';
-import { drawBomb, drawBoss, drawEnemy, itemIcon, tileBox, tileDeadline, tileFloor, tilePostit, tileRack } from './art';
+import {
+  drawBomb, drawBoss, drawEnemy, drawRowSprite, itemIcon, tileBox, tileDeadline, tileFloor, tilePostit, tilePumpkin, tileRack, tileSand, tileTomb,
+} from './art';
 import { FACE_ROWS, drawCharacter, resolveLook } from './characters';
 import { Pix } from './pixel';
 
@@ -31,13 +33,23 @@ export function registerTextures(scene: Phaser.Scene) {
   add('bomb_coin_0', drawBomb('#fde047', 0, true).toCanvas());
   add('bomb_coin_1', drawBomb('#fde047', 1, true).toCanvas());
 
-  for (const e of ENEMIES) for (let f = 0; f < 2; f++) add(`enemy_${e.id}_${f}`, drawEnemy(e.id, f).toCanvas());
+  for (const e of ENEMIES)
+    for (let f = 0; f < 2; f++) {
+      const zs = ZOMBIE_SPRITES.enemies[e.id];
+      add(`enemy_${e.id}_${f}`, (zs ? drawRowSprite(zs.rows, zs.palette, f) : drawEnemy(e.id, f)).toCanvas());
+    }
 
   for (const b of BOSSES)
     for (let f = 0; f < 2; f++) {
-      const pix = b.sprite === 'client' && b.variant ? drawCharacter(b.variant, f ? 1 : 2) : drawBoss(b.sprite, f);
+      const zs = b.sprite === 'pixel' ? ZOMBIE_SPRITES.bosses[b.id] : undefined;
+      const pix = zs
+        ? drawRowSprite(zs.rows, zs.palette, f)
+        : b.sprite === 'client' && b.variant
+          ? drawCharacter(b.variant, f ? 1 : 2)
+          : drawBoss(b.sprite, f);
       add(`boss_${b.id}_${f}`, pix.toCanvas());
       if (b.sprite === 'client' && b.variant) add(`bossface_${b.id}`, drawCharacter(b.variant, 0).toCanvas(1, FACE_ROWS));
+      if (zs) add(`bossface_${b.id}`, drawRowSprite(zs.rows, zs.palette, 1).toCanvas(1, [0, 13]));
     }
 
   const themes: Theme[] = [...STAGES.map((s) => s.theme), ...Object.values(CLIENT_THEMES)];
@@ -48,6 +60,20 @@ export function registerTextures(scene: Phaser.Scene) {
     add(`rack_${k}`, tileRack(t.rack, t.rackLight));
     add(`border_${k}`, tileRack(t.border, t.rackLight));
   }
+  // Modo Zumbi: lápides são os blocos fixos (inclusive a borda) e abóboras os destrutíveis
+  for (const n of NIGHTS) {
+    const t = n.theme;
+    const k = themeKey(t);
+    add(`floor_${k}_0`, tileFloor(t.floorA, t.floorB, false));
+    add(`floor_${k}_1`, tileFloor(t.floorA, t.floorB, true));
+    add(`rack_${k}`, tileTomb(t.rack, t.rackLight));
+    add(`border_${k}`, tileTomb(t.border, t.rack));
+  }
+  add('tomb_title', tileTomb('#8b93a3', '#b6bdcb'));
+  add('pumpkin', tilePumpkin());
+  add('pumpkin_burn', tilePumpkin('burn'));
+  add('pumpkin_zap', tilePumpkin('zap'));
+  add('sand', tileSand());
   add('rack_title', tileRack('#4a5375', '#6c789e'));
   for (const l of BOX_LABELS) {
     add(`box_${l}`, tileBox(l, false, BOX_TEXT_COLOR[l]));

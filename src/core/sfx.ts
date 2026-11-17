@@ -64,6 +64,13 @@ const SOUNDS: Record<string, () => void> = {
   bossAttack: () => tone(110, 0.25, 'sawtooth', 0.05, 60),
   deadline: () => { tone(880, 0.15, 'square', 0.05); tone(660, 0.15, 'square', 0.05, 0, 0.18); tone(880, 0.15, 'square', 0.05, 0, 0.36); },
   end: () => { tone(523, 0.12, 'square', 0.05); tone(659, 0.12, 'square', 0.05, 0, 0.12); tone(784, 0.25, 'square', 0.05, 0, 0.24); },
+  // Modo Zumbi
+  bite: () => { tone(200, 0.12, 'sawtooth', 0.06, -80); tone(140, 0.2, 'sawtooth', 0.05, -60, 0.1); },
+  cure: () => { tone(660, 0.08, 'triangle', 0.05); tone(990, 0.12, 'triangle', 0.05, 0, 0.08); },
+  howl: () => tone(330, 0.6, 'sine', 0.06, 420),
+  zap: () => { noise(0.12, 0.08); tone(1600, 0.1, 'square', 0.03, -1200); },
+  stomp: () => { noise(0.4, 0.2); tone(60, 0.35, 'triangle', 0.1, -20); },
+  bossAppear: () => { tone(110, 0.3, 'sawtooth', 0.06); tone(98, 0.3, 'sawtooth', 0.06, 0, 0.3); tone(82, 0.5, 'sawtooth', 0.06, 0, 0.6); },
   move: () => tone(440, 0.04, 'square', 0.03),
   confirm: () => { tone(587, 0.06, 'square', 0.04); tone(880, 0.08, 'square', 0.04, 0, 0.06); },
 };

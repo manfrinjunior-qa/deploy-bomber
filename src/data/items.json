@@ -31,8 +31,14 @@
     { "id": "cf", "icon": "CF", "name": "Café", "role": "NEUTRAL", "kind": "neutral", "effect": { "flag": "coffee", "duration": 5 }, "weight": 2.5, "color": "#7c4a2d", "text": "#fde7c8", "desc": "Invencível por 5 s" },
     { "id": "cr", "icon": "CR", "name": "Code Review", "role": "NEUTRAL", "kind": "neutral", "effect": { "flag": "codeReview", "duration": 8 }, "weight": 2.5, "color": "#14b8a6", "text": "#042f2e", "desc": "Mostra onde há itens nos blocos próximos" },
     { "id": "xx", "icon": "XX", "name": "Bug Crítico", "role": "NEUTRAL", "kind": "neutral", "effect": { "flag": "invert", "duration": 8 }, "weight": 2.5, "color": "#1b1e2b", "text": "#f43f5e", "border": "#f43f5e", "desc": "Item ruim: inverte os controles por 8 s" },
-    { "id": "ia", "icon": "IA", "name": "Copiloto IA", "role": "NEUTRAL", "kind": "neutral", "effect": { "flag": "copilot", "duration": 10 }, "weight": 2.5, "color": "#e879f9", "text": "#4a044e", "desc": "Destaca a rota segura por 10 s (às vezes alucina)" }
+    { "id": "ia", "icon": "IA", "name": "Copiloto IA", "role": "NEUTRAL", "kind": "neutral", "effect": { "flag": "copilot", "duration": 10 }, "weight": 2.5, "color": "#e879f9", "text": "#4a044e", "desc": "Destaca a rota segura por 10 s (às vezes alucina)" },
+
+    { "id": "dc", "icon": "DC", "name": "Doce", "role": "NEUTRAL", "kind": "night", "mode": "zombie", "effect": { "flag": "candy", "duration": 8 }, "weight": 5, "color": "#f472b6", "text": "#3a0a22", "border": "#c2468a", "desc": "Velocidade +2 por 8 s" },
+    { "id": "lt", "icon": "LT", "name": "Lanterna", "role": "NEUTRAL", "kind": "night", "mode": "zombie", "effect": { "flag": "lantern", "duration": 10 }, "weight": 5, "color": "#fde047", "text": "#2e2504", "border": "#b8960e", "desc": "Ilumina o mapa escuro por 10 s" },
+    { "id": "ab", "icon": "AB", "name": "Água benta", "role": "NEUTRAL", "kind": "night", "mode": "zombie", "effect": { "flag": "holy" }, "weight": 5, "color": "#7dd3fc", "text": "#062033", "border": "#3b9bc9", "desc": "Protege de 1 mordida" },
+    { "id": "bp", "icon": "BP", "name": "Bala de prata", "role": "NEUTRAL", "kind": "night", "mode": "zombie", "effect": { "flag": "silver" }, "weight": 5, "color": "#cbd5e1", "text": "#0f172a", "border": "#94a3b8", "desc": "A próxima explosão dá dano dobrado no chefão" }
   ],
+  "nightDrops": [["dc", 5], ["lt", 5], ["ab", 5], ["bp", 5]],
   "dropTables": {
     "DEV": [["js", 20], ["py", 20], ["jv", 20], ["go", 10], ["rs", 10], ["c", 10], ["cf", 2.5], ["cr", 2.5], ["xx", 2.5], ["ia", 2.5]],
     "QA":  [["cy", 20], ["pw", 20], ["jt", 20], ["se", 10], ["pm", 10], ["bug", 10], ["cf", 2.5], ["cr", 2.5], ["xx", 2.5], ["ia", 2.5]],

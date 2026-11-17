@@ -99,7 +99,10 @@ export interface ItemDef {
   icon: string;
   name: string;
   role: RoleId | 'NEUTRAL';
-  kind: 'attr' | 'special' | 'neutral';
+  /** 'night' = item da noite, só cai no Modo Zumbi */
+  kind: 'attr' | 'special' | 'neutral' | 'night';
+  /** modo em que o item cai; sem o campo, vale para todos */
+  mode?: GameMode;
   effect: ItemEffect;
   weight: number;
   color: string;
@@ -115,13 +118,26 @@ export interface EnemyDef {
   name: string;
   vida: number;
   speed: number;
-  touch: 'damage' | 'freeze' | 'swap';
+  /** bite = mordida (vira zumbi por 6 s); scare = susto (congela) */
+  touch: 'damage' | 'freeze' | 'swap' | 'bite' | 'scare';
   freeze?: number;
   splitAfter?: number;
   score: number;
   ia: 'wander' | 'chase';
+  /** chance de ir atrás do jogador mais próximo a cada tile (padrão: 0,5 no 'chase') */
+  chase?: number;
+  /** zumbi: acelera na lua cheia */
+  zombie?: boolean;
+  /** voa/atravessa blocos destrutíveis (não atravessa lápides) */
+  fly?: boolean;
+  /** só aparece perto de luz (explosão, jogador ou lanterna) */
+  hidden?: boolean;
+  /** morcego: dá rasantes em linha reta */
+  swoop?: boolean;
+  /** chuta bombas de volta e arrasta blocos */
+  poltergeist?: boolean;
 }
-export type EnemyType = 'bug' | 'meeting' | 'leak' | 'merge';
+export type EnemyType = 'bug' | 'meeting' | 'leak' | 'merge' | 'zombie' | 'runner' | 'office' | 'ghost' | 'poltergeist' | 'bat';
 
 export interface Theme {
   floorA: string;
@@ -150,6 +166,21 @@ export interface StageDef {
   bossArena: ArenaDef;
 }
 
+/** Uma noite do Modo Zumbi: uma arena com cota de ajudantes e um chefão. */
+export interface NightDef {
+  id: number; // 1..5
+  name: string; // arena
+  color: string;
+  chefao: string;
+  /** cota de ajudantes da noite; o chefão só aparece quando todos caem */
+  ajudantes: number;
+  theme: Theme;
+  desc: string;
+  inimigos: EnemyType[];
+  mecanica: string;
+  mapa: string[];
+}
+
 export interface BossAttack {
   type: string;
   name: string;
@@ -159,6 +190,8 @@ export interface BossAttack {
   duration?: number;
   tiles?: number;
   delay?: number;
+  /** texto do log, quando difere do padrão do tipo de ataque */
+  msg?: string;
 }
 
 export interface BossDef {
@@ -174,7 +207,14 @@ export interface BossDef {
   attacks: BossAttack[];
 }
 
-export type GameMode = 'story' | 'battle' | 'client';
+export type GameMode = 'story' | 'battle' | 'client' | 'zombie';
+
+/** Sprite em texto: cada caractere é uma chave da paleta; '.' é transparente. */
+export interface RowSprite {
+  name: string;
+  rows: string[];
+  palette: Record<string, string>;
+}
 
 export interface PlayerSetup {
   slot: number;

@@ -1,9 +1,9 @@
 import { enemyById, roleById } from '../core/data';
 import { pick, shuffle } from '../core/rng';
-import type { BossAttack, Dir, EnemyType } from '../core/types';
+import type { BossAttack, Dir, EnemyDef, EnemyType } from '../core/types';
 import type { Boss, Enemy, Mover } from '../entities/Enemy';
-import { TILE, randomBoxLabel } from './grid';
-import { DIRS4, type World } from './world';
+import { TILE } from './grid';
+import { DIRS4, MOON_BOOST, SAND_SLOW, type World } from './world';
 
 const MAX_ENEMIES = 16;
 const BOSS_COLOR = '#f43f5e';
@@ -26,9 +26,23 @@ export function spawnEnemy(w: World, type: EnemyType, x: number, y: number): Ene
     age: 0,
     dead: false,
     anim: w.rng() * 2,
+    hitCd: 0,
+    helper: false,
+    dash: 0,
+    kickCd: 2,
+    dragCd: 4 + w.rng() * 4,
   };
   w.enemies.push(e);
   return e;
+}
+
+/** Voadores (morcego, fantasmas) passam por cima de abóboras e bombas, mas não de lápides. */
+function enterFor(w: World, def: EnemyDef) {
+  if (!def.fly) return (x: number, y: number) => w.walkable(x, y);
+  return (x: number, y: number) => {
+    const t = w.grid.get(x, y);
+    return t !== TILE.Wall && t !== TILE.Deadline;
+  };
 }
 
 /** Anda de tile em tile; `choose` decide a direção ao chegar no centro de um tile. */
@@ -87,16 +101,37 @@ function chooseDir(w: World, m: Mover, canEnter: (x: number, y: number) => boole
 }
 
 export function updateEnemies(w: World, dt: number) {
-  const canEnter = (x: number, y: number) => w.walkable(x, y);
   const born: Enemy[] = [];
   for (const e of w.enemies) {
     e.frozen = Math.max(0, e.frozen - dt);
     e.stunned = Math.max(0, e.stunned - dt);
+    e.hitCd = Math.max(0, e.hitCd - dt);
     const still = e.frozen > 0 || e.stunned > 0 || w.enemyFreeze > 0;
     if (still) continue;
     e.anim += dt;
     const def = enemyById(e.type);
-    stepMover(e, dt, canEnter, () => chooseDir(w, e, canEnter, def.ia === 'chase' ? 0.5 : 0));
+    const canEnter = enterFor(w, def);
+
+    // velocidade: lua cheia (zumbis), areia (quem anda no chão), rasante (morcego)
+    let mul = 1;
+    if (def.zombie && w.moonT > 0) mul *= MOON_BOOST;
+    if (!def.fly && w.grid.isSand(Math.round(e.x), Math.round(e.y))) mul *= SAND_SLOW;
+    if (def.swoop) updateSwoop(w, e, dt);
+    if (e.dash > 0) mul *= 2.4;
+    e.speed = def.speed * mul;
+
+    const chase = def.ia === 'chase' ? (def.chase ?? 0.5) : 0;
+    stepMover(e, dt, canEnter, () => {
+      if (e.dash > 0) {
+        const fwd = DIRS4.find((d) => d.x === e.dir.x && d.y === e.dir.y)!;
+        const cx = Math.round(e.x);
+        const cy = Math.round(e.y);
+        if (canEnter(cx + fwd.x, cy + fwd.y)) return fwd;
+        e.dash = 0;
+      }
+      return chooseDir(w, e, canEnter, chase);
+    });
+    if (def.poltergeist) updatePoltergeist(w, e, dt);
 
     // Memory Leak: divide em dois se não for destruído em 10 s
     if (def.splitAfter) {
@@ -130,10 +165,95 @@ export function updateEnemies(w: World, dt: number) {
           w.fx({ kind: 'ring', x: p.x, y: p.y, total: 0.5, color: '#3b82f6' });
           w.events.push('swap');
         }
+      } else if (def.touch === 'bite') {
+        w.bite(p);
+      } else if (def.touch === 'scare') {
+        // fantasmas não mordem: o susto congela
+        if (p.touchCd <= 0 && p.coffee <= 0 && p.invuln <= 0) {
+          p.frozen = def.freeze ?? 2;
+          p.touchCd = (def.freeze ?? 2) + 1.5;
+          w.sayP(p, `levou um SUSTO`, `${def.name.toLowerCase()} · congelado por ${def.freeze ?? 2} s`);
+          w.fx({ kind: 'ring', x: p.x, y: p.y, total: 0.5, color: '#e9d5ff' });
+          w.events.push('freeze');
+        }
       }
     }
   }
   w.enemies.push(...born);
+}
+
+/** Morcego: quando um jogador fica na mesma linha ou coluna, dá um rasante em linha reta. */
+function updateSwoop(w: World, e: Enemy, dt: number) {
+  if (e.dash > 0) {
+    e.dash = Math.max(0, e.dash - dt);
+    return;
+  }
+  e.age += dt;
+  if (e.age < 3.5) return;
+  const cx = Math.round(e.x);
+  const cy = Math.round(e.y);
+  if (cx !== e.x || cy !== e.y) return; // só decide no centro do tile
+  for (const p of w.players) {
+    if (!p.alive) continue;
+    const px = Math.round(p.x);
+    const py = Math.round(p.y);
+    const dist = Math.abs(px - cx) + Math.abs(py - cy);
+    if ((px !== cx && py !== cy) || dist > 6 || dist === 0) continue;
+    e.dir = { x: Math.sign(px - cx), y: Math.sign(py - cy) };
+    e.tx = cx;
+    e.ty = cy;
+    e.dash = 1.2;
+    e.age = 0;
+    return;
+  }
+}
+
+/** Poltergeist: chuta de volta as bombas que encosta e, de tempos em tempos, arrasta uma abóbora. */
+function updatePoltergeist(w: World, e: Enemy, dt: number) {
+  e.kickCd = Math.max(0, e.kickCd - dt);
+  e.dragCd = Math.max(0, e.dragCd - dt);
+  const cx = Math.round(e.x);
+  const cy = Math.round(e.y);
+  if (e.kickCd <= 0) {
+    for (const d of DIRS4) {
+      const b = w.bombAt(cx + d.x, cy + d.y);
+      if (!b || b.slide) continue;
+      b.slide = { ...d };
+      b.slideProg = 0;
+      e.kickCd = 2.5;
+      w.events.push('kick');
+      w.fx({ kind: 'ring', x: b.x, y: b.y, total: 0.4, color: '#c4b5fd' });
+      break;
+    }
+  }
+  if (e.dragCd <= 0) {
+    const g = w.grid;
+    const free = (x: number, y: number) =>
+      g.isFloor(x, y) &&
+      !w.bombAt(x, y) &&
+      !w.items.some((it) => it.x === x && it.y === y) &&
+      !w.players.some((p) => p.alive && Math.round(p.x) === x && Math.round(p.y) === y) &&
+      !w.enemies.some((o) => !enemyById(o.type).fly && Math.round(o.x) === x && Math.round(o.y) === y) &&
+      !(w.boss && !w.boss.dead && Math.round(w.boss.x) === x && Math.round(w.boss.y) === y);
+    for (const d of shuffle(w.rng, [...DIRS4])) {
+      const bx = cx + d.x;
+      const by = cy + d.y;
+      if (g.get(bx, by) !== TILE.Box || !free(bx + d.x, by + d.y)) continue;
+      const from = g.idx(bx, by);
+      const to = g.idx(bx + d.x, by + d.y);
+      g.set(bx + d.x, by + d.y, TILE.Box);
+      g.label[to] = g.label[from];
+      g.hasDrop[to] = g.hasDrop[from];
+      g.timer[to] = g.timer[from];
+      g.set(bx, by, TILE.Floor);
+      g.hasDrop[from] = 0;
+      g.timer[from] = 0;
+      e.dragCd = 7;
+      w.fx({ kind: 'puff', x: bx + d.x, y: by + d.y, total: 0.4, color: '#a78bfa' });
+      return;
+    }
+    e.dragCd = 2;
+  }
 }
 
 function spawnEnemyDetached(w: World, type: EnemyType, x: number, y: number): Enemy {
@@ -151,18 +271,42 @@ export function updateBoss(w: World, dt: number) {
   b.lastAttackT = Math.max(0, b.lastAttackT - dt);
   if (b.frozen > 0 || w.enemyFreeze > 0) return;
   b.anim += dt;
-  const canEnter = (x: number, y: number) => w.walkable(x, y);
-  stepMover(b, dt, canEnter, () => chooseDir(w, b, canEnter, 0.45));
+
+  // Investida: espera o aviso explodir e aparece no fim da linha
+  if (b.pending) {
+    b.pending.t -= dt;
+    if (b.pending.t <= 0) {
+      const s = w.walkable(b.pending.x, b.pending.y) ? b.pending : w.nearestFree(b.pending.x, b.pending.y);
+      b.x = b.tx = s.x;
+      b.y = b.ty = s.y;
+      b.pending = null;
+    }
+  } else {
+    b.dash = Math.max(0, b.dash - dt);
+    b.speed = b.def.speed * (b.dash > 0 ? 2.2 : 1);
+    const canEnter = (x: number, y: number) => w.walkable(x, y);
+    stepMover(b, dt, canEnter, () => chooseDir(w, b, canEnter, b.dash > 0 ? 1 : 0.45));
+  }
 
   b.def.attacks.forEach((a, i) => {
     b.timers[i] -= dt;
-    if (b.timers[i] <= 0) {
+    if (b.timers[i] <= 0 && !b.pending) {
       b.timers[i] = a.interval;
       doAttack(w, b, a);
     }
   });
 
-  for (const p of w.players) if (p.alive && Math.abs(p.x - b.x) < 0.8 && Math.abs(p.y - b.y) < 0.8) w.hurt(p, -1);
+  for (const p of w.players) {
+    if (!p.alive || Math.abs(p.x - b.x) >= 0.8 || Math.abs(p.y - b.y) >= 0.8) continue;
+    const before = p.lives;
+    w.hurt(p, -1);
+    // Mordida do Vampiro: rouba a vida perdida
+    if (b.dash > 0 && p.lives < before) {
+      b.dash = 0;
+      b.hp = Math.min(b.maxHp, b.hp + 1);
+      w.say(b.def.name.toUpperCase(), BOSS_COLOR, 'roubou 1 vida', `de ${roleById(p.role).name} · resistência ${b.hp}/${b.maxHp}`);
+    }
+  }
 }
 
 function freeTilesAwayFromPlayers(w: World, minDist: number) {
@@ -263,7 +407,7 @@ function doAttack(w: World, b: Boss, a: BossAttack) {
       if (!alive.length) break;
       const p = alive.reduce((m, q) => (Math.hypot(q.x - b.x, q.y - b.y) < Math.hypot(m.x - b.x, m.y - b.y) ? q : m));
       p.frozen = a.duration ?? 1.5;
-      say(`${roleById(p.role).name} ficou preso no e-mail`);
+      say(`${roleById(p.role).name} ${a.msg ?? 'ficou preso no e-mail'}`);
       w.events.push('freeze');
       break;
     }
@@ -284,10 +428,10 @@ function doAttack(w: World, b: Boss, a: BossAttack) {
       for (const t of tiles.slice(0, a.tiles ?? 6)) {
         g.set(t.x, t.y, TILE.Box);
         const i = g.idx(t.x, t.y);
-        g.label[i] = randomBoxLabel(w.rng);
+        g.label[i] = w.newBoxLabel();
         g.hasDrop[i] = w.rng() < 0.3 ? 1 : 0;
       }
-      say('novos blocos de dívida técnica');
+      say(a.msg ?? 'novos blocos de dívida técnica');
       break;
     }
     case 'shuffleBoxes': {
@@ -353,6 +497,108 @@ function doAttack(w: World, b: Boss, a: BossAttack) {
       const n = w.items.length;
       w.items = [];
       say(n ? `${n} ite${n > 1 ? 'ns' : 'm'} sumiram do chão` : 'nada para cancelar');
+      break;
+    }
+
+    // ───────── chefões do Modo Zumbi
+    case 'charge': {
+      // Investida: corre em linha reta na direção do jogador mais próximo, derrubando blocos
+      const alive = w.players.filter((p) => p.alive);
+      if (!alive.length) break;
+      const t = alive.reduce((m, q) => (Math.hypot(q.x - b.x, q.y - b.y) < Math.hypot(m.x - b.x, m.y - b.y) ? q : m));
+      const ddx = t.x - bx;
+      const ddy = t.y - by;
+      const prefer: Dir[] = Math.abs(ddx) >= Math.abs(ddy)
+        ? [{ x: Math.sign(ddx) || 1, y: 0 }, { x: 0, y: Math.sign(ddy) || 1 }]
+        : [{ x: 0, y: Math.sign(ddy) || 1 }, { x: Math.sign(ddx) || 1, y: 0 }];
+      const line = (d: Dir) => {
+        const out: { x: number; y: number }[] = [];
+        for (let i = 1; i < 15; i++) {
+          const x = bx + d.x * i;
+          const y = by + d.y * i;
+          const k = g.get(x, y);
+          if (k === TILE.Wall || k === TILE.Deadline) break;
+          out.push({ x, y });
+        }
+        return out;
+      };
+      const d = [...prefer, ...DIRS4].find((dd) => line(dd).length > 0);
+      if (!d) break;
+      const tiles = line(d);
+      const delay = a.delay ?? 0.9;
+      for (const c of tiles) w.markers.push({ x: c.x, y: c.y, t: delay, total: delay, range: 0, owner: -1, kind: 'blast' });
+      const end = tiles[tiles.length - 1];
+      // chega depois que as chamas do próprio aviso apagam (FLAME_TIME = 0,5 s)
+      b.pending = { x: end.x, y: end.y, t: delay + 0.55 };
+      b.dir = d;
+      say('vai atravessar o mapa em linha reta');
+      break;
+    }
+    case 'stunAll': {
+      let n = 0;
+      for (const p of w.players)
+        if (p.alive && p.coffee <= 0) {
+          p.stunned = a.duration ?? 1.5;
+          n++;
+        }
+      w.fx({ kind: 'ring', x: b.x, y: b.y, total: 0.8, color: '#fbbf24' });
+      w.events.push('howl');
+      say(n ? `todos atordoados por ${a.duration ?? 1.5} s` : 'ninguém se abalou');
+      break;
+    }
+    case 'stomp': {
+      // Pisão: o mapa treme e as bombas são empurradas para longe do chefão
+      let n = 0;
+      for (const bomb of w.bombs) {
+        if (bomb.slide) continue;
+        const ddx = bomb.x - bx;
+        const ddy = bomb.y - by;
+        if (!ddx && !ddy) continue;
+        bomb.slide = Math.abs(ddx) >= Math.abs(ddy) ? { x: Math.sign(ddx), y: 0 } : { x: 0, y: Math.sign(ddy) };
+        bomb.slideProg = 0;
+        n++;
+      }
+      w.events.push('stomp');
+      say(n ? `${n} bomba${n > 1 ? 's' : ''} empurrada${n > 1 ? 's' : ''}` : 'o chão tremeu');
+      break;
+    }
+    case 'sandstorm': {
+      w.sandT = Math.max(w.sandT, a.duration ?? 5);
+      say(`o mapa sumiu por ${a.duration ?? 5} s`);
+      break;
+    }
+    case 'hexBombs': {
+      // Feitiço: bombas próximas viram morcegos
+      const near = w.bombs.filter((bomb) => Math.hypot(bomb.x - b.x, bomb.y - b.y) <= 4);
+      for (const bomb of near) {
+        w.bombs.splice(w.bombs.indexOf(bomb), 1);
+        if (w.enemies.length < MAX_ENEMIES) spawnEnemy(w, 'bat', bomb.x, bomb.y);
+        w.fx({ kind: 'puff', x: bomb.x, y: bomb.y, total: 0.5, color: '#a855f7' });
+      }
+      const n = near.length;
+      say(n ? (n > 1 ? `${n} bombas viraram morcegos` : '1 bomba virou morcego') : 'nenhuma bomba por perto');
+      break;
+    }
+    case 'teleport': {
+      // Revoada: vira morcego e reaparece no canto mais longe do time
+      const tiles = w.floorTiles((x, y) => !w.bombAt(x, y));
+      const alive = w.players.filter((p) => p.alive);
+      if (!tiles.length || !alive.length) break;
+      const far = tiles.reduce((m, t) => {
+        const dt = Math.min(...alive.map((p) => Math.hypot(p.x - t.x, p.y - t.y)));
+        const dm = Math.min(...alive.map((p) => Math.hypot(p.x - m.x, p.y - m.y)));
+        return dt > dm ? t : m;
+      });
+      w.fx({ kind: 'puff', x: b.x, y: b.y, total: 0.6, color: '#7c3aed' });
+      b.x = b.tx = far.x;
+      b.y = b.ty = far.y;
+      w.fx({ kind: 'puff', x: b.x, y: b.y, total: 0.6, color: '#7c3aed' });
+      say('reapareceu em outro canto');
+      break;
+    }
+    case 'drain': {
+      b.dash = a.duration ?? 3;
+      say('vai atrás de quem estiver mais perto');
       break;
     }
   }

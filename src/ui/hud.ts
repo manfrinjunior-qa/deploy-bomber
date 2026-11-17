@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ROLE_ORDER, roleById, specialById } from '../core/data';
+import { ROLE_ORDER, bossById, roleById, specialById } from '../core/data';
 import type { Player } from '../entities/Player';
 import { input } from '../input/input';
 import { keyName, moveLabel } from '../input/keymaps';
@@ -30,6 +30,7 @@ const TIMED: [keyof Player, string][] = [
   ['codeReview', 'cr'],
   ['invert', 'xx'],
   ['copilot', 'ia'],
+  ['candy', 'dc'],
 ];
 
 interface PanelUI {
@@ -56,8 +57,11 @@ export class Hud {
   private bossG?: Phaser.GameObjects.Graphics;
   private bossFace?: Phaser.GameObjects.Image;
   private bossAttack?: Phaser.GameObjects.Text;
+  private bossLabel?: Phaser.GameObjects.Text;
+  private zombie: boolean;
 
   constructor(private scene: Phaser.Scene, private w: World) {
+    this.zombie = w.cfg.mode === 'zombie';
     const g = scene.add.graphics().setDepth(20);
     // painéis dos jogadores
     for (let slot = 0; slot < 4; slot++) {
@@ -87,33 +91,39 @@ export class Hud {
     // relógio
     g.fillStyle(0x0b0d14, 1);
     g.fillRect(TIMER_X, PANEL_Y, TIMER_W, PANEL_H);
-    g.lineStyle(3, hex('#3a4058'), 1);
+    g.lineStyle(3, hex(this.zombie ? '#f97316' : '#3a4058'), 1);
     g.strokeRect(TIMER_X + 1.5, PANEL_Y + 1.5, TIMER_W - 3, PANEL_H - 3);
-    this.timer = text(scene, TIMER_X + TIMER_W / 2, PANEL_Y + 18, '03:00', { size: 32, color: COLORS.yellow, align: 'center' }).setDepth(21);
-    const st = w.cfg.mode === 'client' ? 'DESAFIO DO CLIENTE' : `FASE ${w.cfg.stageId} · ${w.cfg.stageName.toUpperCase()}`;
+    this.timer = text(scene, TIMER_X + TIMER_W / 2, PANEL_Y + 18, '03:00', { size: 32, color: this.zombie ? '#f97316' : COLORS.yellow, align: 'center' }).setDepth(21);
+    const st =
+      w.cfg.mode === 'client'
+        ? 'DESAFIO DO CLIENTE'
+        : this.zombie
+          ? `NOITE ${w.cfg.night} · ${w.cfg.stageName.toUpperCase()}`
+          : `FASE ${w.cfg.stageId} · ${w.cfg.stageName.toUpperCase()}`;
     this.stageText = text(scene, TIMER_X + TIMER_W / 2, PANEL_Y + 66, st, { size: 8, color: COLORS.text, align: 'center' }).setDepth(21);
     this.arenaText = text(scene, TIMER_X + TIMER_W / 2, PANEL_Y + 86, '', { size: 7, color: COLORS.dim, align: 'center' }).setDepth(21);
     const al = w.cfg.arenaLabel.split('·').pop()!.trim().toUpperCase();
     this.arenaText.setText(al);
 
-    // painel lateral
+    // painel lateral (no Modo Zumbi o chefão ainda não está no mapa: o quadro mostra os ajudantes)
     panel(g, SIDE_X, BOARD_Y, SIDE_W, 616, COLORS.panel);
     let y = BOARD_Y + 18;
-    if (w.boss) {
+    const bossDef = w.boss?.def ?? (this.zombie && w.cfg.bossId ? bossById(w.cfg.bossId) : undefined);
+    if (bossDef) {
       this.bossG = scene.add.graphics().setDepth(21);
       g.fillStyle(hex('#2a1418'), 1);
       g.fillRect(SIDE_X + 14, y - 4, SIDE_W - 28, 92);
-      const key = scene.textures.exists(`bossface_${w.boss.def.id}`) ? `bossface_${w.boss.def.id}` : `boss_${w.boss.def.id}_0`;
+      const key = scene.textures.exists(`bossface_${bossDef.id}`) ? `bossface_${bossDef.id}` : `boss_${bossDef.id}_0`;
       this.bossFace = scene.add.image(SIDE_X + 48, y + 40, key).setScale(key.startsWith('bossface') ? 3 : 2).setDepth(21);
-      text(scene, SIDE_X + 86, y + 6, 'CHEFÃO', { size: 8, color: '#f43f5e' }).setDepth(21);
-      text(scene, SIDE_X + 86, y + 22, w.boss.def.name, { font: 'body', size: 16, bold: true, wrap: SIDE_W - 110 }).setDepth(21);
-      this.bossAttack = text(scene, SIDE_X + 86, y + 66, '', { font: 'body', size: 13, color: '#fda4af' }).setDepth(21);
+      this.bossLabel = text(scene, SIDE_X + 86, y + 6, 'CHEFÃO', { size: 8, color: '#f43f5e' }).setDepth(21);
+      text(scene, SIDE_X + 86, y + 22, bossDef.name, { font: 'body', size: 16, bold: true, wrap: SIDE_W - 110 }).setDepth(21);
+      this.bossAttack = text(scene, SIDE_X + 86, y + 66, '', { font: 'body', size: 13, color: '#fda4af', wrap: SIDE_W - 110 }).setDepth(21);
       y += 104;
     }
-    text(scene, SIDE_X + 20, y, '> LOG DO SPRINT', { size: 13, color: COLORS.green }).setDepth(21);
+    text(scene, SIDE_X + 20, y, this.zombie ? '> LOG DA NOITE' : '> LOG DO SPRINT', { size: 13, color: this.zombie ? '#f97316' : COLORS.green }).setDepth(21);
     this.logTop = y + 30;
     this.logLines = scene.add.graphics().setDepth(20);
-    const rows = w.boss ? 5 : 7;
+    const rows = bossDef ? 5 : 7;
     for (let i = 0; i < rows; i++) {
       const ly = this.logTop + i * 50;
       this.logTexts.push({
@@ -154,9 +164,18 @@ export class Hud {
     const ss = String(t % 60).padStart(2, '0');
     this.timer.setText(`${mm}:${ss}`);
     const fast = w.rushT > 0 || (w.cfg.stageId === 5 && w.time <= 60);
-    this.timer.setColor(w.deadline ? COLORS.red : fast ? '#fb923c' : COLORS.yellow);
+    this.timer.setColor(w.deadline ? COLORS.red : fast ? '#fb923c' : this.zombie ? '#f97316' : COLORS.yellow);
     if (fast && !w.deadline) this.arenaText.setText(w.rushT > 0 ? 'MVP PRA ONTEM · 2×' : 'RELÓGIO ACELERADO');
     else if (w.deadline) this.arenaText.setText('DEADLINE!');
+    else if (this.zombie) {
+      const status =
+        w.sandT > 0 ? 'TEMPESTADE DE AREIA'
+        : w.lanternT > 0 ? `LANTERNA · ${Math.ceil(w.lanternT)} s`
+        : w.moonT > 0 ? 'LUA CHEIA · ZUMBIS 1,5×'
+        : w.cfg.night === 5 ? 'AS VELAS APAGARAM'
+        : `NOITE ${w.cfg.night}/5`;
+      this.arenaText.setText(status);
+    }
 
     for (const p of w.players) this.updatePanel(p);
     this.updateLog();
@@ -167,7 +186,7 @@ export class Hud {
     const ui = this.panels[p.slot];
     const timed = TIMED.filter(([k]) => (p[k] as number) > 0).map(([, id]) => id);
     const icons = [...timed, ...p.items];
-    const sig = `${p.lives}|${p.score}|${icons.join(',')}|${p.alive}|${p.shield}`;
+    const sig = `${p.lives}|${p.score}|${icons.join(',')}|${p.alive}|${p.shield}|${p.zombie > 0}`;
     if (sig !== ui.sig) {
       ui.sig = sig;
       const maxLives = Math.max(3, p.lives);
@@ -180,6 +199,8 @@ export class Hud {
       });
       ui.more?.setText(icons.length > 6 ? `+${icons.length - 6}` : '');
       ui.face?.setAlpha(p.alive ? 1 : 0.3);
+      if (p.zombie > 0) ui.face?.setTint(0x86efac);
+      else ui.face?.clearTint();
     }
     // recarga do especial (FR-007)
     const g = ui.cd;
@@ -226,11 +247,28 @@ export class Hud {
 
   private updateBoss() {
     const b = this.w.boss;
-    if (!b || !this.bossG) return;
+    if (!this.bossG) return;
     const g = this.bossG;
-    g.clear();
     const x = SIDE_X + 86;
     const y = BOARD_Y + 18 + 50;
+    if (!b) {
+      // Modo Zumbi: barra de ajudantes derrotados; o chefão aparece quando ela enche
+      const h = this.w.horde;
+      if (!h) return;
+      g.clear();
+      const down = this.w.helpersDown();
+      const seg = Math.min(16, Math.floor((SIDE_W - 120) / h.quota) - 3);
+      for (let i = 0; i < h.quota; i++) {
+        g.fillStyle(hex(i < down ? '#84cc16' : '#2a3a1e'), 1);
+        g.fillRect(x + i * (seg + 3), y, seg, 10);
+      }
+      this.bossLabel?.setText(`AJUDANTES ${down} / ${h.quota}`).setColor('#84cc16');
+      this.bossAttack?.setText('vem depois dos ajudantes');
+      this.bossFace?.setAlpha(0.45);
+      return;
+    }
+    g.clear();
+    this.bossLabel?.setText('CHEFÃO').setColor('#f43f5e');
     const seg = Math.min(16, Math.floor((SIDE_W - 120) / b.maxHp) - 3);
     for (let i = 0; i < b.maxHp; i++) {
       g.fillStyle(hex(i < b.hp ? '#ef4444' : '#3a2a30'), 1);

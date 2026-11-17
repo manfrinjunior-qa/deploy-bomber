@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deploy Bomber — Personagens em 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#12131A; --panel:#1C1E2A; --line:#2A2D3E; --txt:#F1F5F9; --muted:#A5ADC4; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--txt); font-family:'Space Grotesk', system-ui, sans-serif; overflow:hidden; }
+  #stage { position:fixed; inset:0; }
+  canvas { display:block; }
+  .top { position:fixed; top:0; left:0; right:0; padding:16px 20px; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; pointer-events:none; flex-wrap:wrap; }
+  .title { font-family:'Press Start 2P', monospace; font-size:16px; line-height:1.6; }
+  .title small { display:block; font-family:'Space Grotesk', sans-serif; font-size:14px; color:var(--muted); margin-top:4px; }
+  .toggles { display:flex; gap:8px; pointer-events:auto; flex-wrap:wrap; }
+  button { font:inherit; cursor:pointer; }
+  .tg { min-height:40px; padding:8px 14px; background:var(--panel); color:var(--txt); border:2px solid var(--line); font-family:'Press Start 2P', monospace; font-size:10px; }
+  .tg[aria-pressed="true"] { border-color:#FDE047; color:#FDE047; }
+  .dock { position:fixed; left:0; right:0; bottom:0; padding:12px 16px 16px; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; background:linear-gradient(transparent, rgba(18,19,26,.92) 30%); }
+  .role { background:var(--panel); border-top:4px solid var(--c); padding:10px 12px; display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .role h2 { margin:0; font-family:'Press Start 2P', monospace; font-size:10px; color:var(--c); display:flex; justify-content:space-between; gap:8px; }
+  .role h2 span { font-family:'Space Grotesk', sans-serif; font-size:13px; color:var(--txt); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; }
+  .chip { min-height:32px; min-width:32px; padding:4px 8px; background:#262938; color:var(--muted); border:2px solid transparent; font-size:12px; }
+  .chip[aria-pressed="true"] { border-color:var(--c); color:var(--txt); }
+  .hint { position:fixed; right:20px; bottom:150px; font-size:12px; color:var(--muted); pointer-events:none; }
+  .dock.boss .role { display:none; }
+  .dock.boss .bossnote { display:block; }
+  .bossnote { display:none; grid-column:1 / -1; background:var(--panel); border-top:4px solid #EF4444; padding:12px 14px; font-size:14px; }
+  @media (max-width: 760px) {
+    .dock { grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .hint { display:none; }
+    .title { font-size:12px; }
+  }
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="stage" aria-label="Cena 3D com os personagens em voxel" role="img"></div>
+<div class="top">
+  <div class="title">DEPLOY BOMBER 3D<small>Os sprites viraram voxels: cada pixel é um cubo com profundidade</small></div>
+  <div class="toggles">
+    <button class="tg" id="tTeam" aria-pressed="true">TIME</button>
+    <button class="tg" id="tBoss" aria-pressed="false">CHEFÕES</button>
+    <button class="tg" id="tSpin" aria-pressed="true">GIRAR</button>
+  </div>
+</div>
+<div class="hint">Arraste para girar · role para aproximar</div>
+<div class="dock" id="dock">
+  <div class="bossnote">Desafio do Cliente: as 4 versões do Cliente como chefões — Executivo, Startup, Investidora e Dono da empresa.</div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const DATA = {"roles":[{"key":"DEV","label":"DEV","color":"#8B5CF6","variants":[{"name":"Personalizado","hair":"quiffbeard","rows":["...HHHHHHHH.....","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHHHHHHHHHHHHH.",".HHSSSSSSSSSSHH.",".HSHHHSSSSHHHsH.",".SSSDWSSSSDWSsS.",".SSXDDSSSSDDXsS.",".USSUUUUUUUUSsU.",".UUUmWWWWWWmUUU.","..UUUUUUUUUUUU..","....BBBVVBBB....","..SBBBBVVBBbbS..","..SBBBBBBBBbbS..","...BBBBBBBBbb...","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#F6CBA4","s":"#CEAA89","H":"#2B1D14","h":"#756C66","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#F59A8B","m":"#7A2E22","G":"#E5E7EB","N":"#1F2937","U":"#3A2A1E","B":"#1E2A4A","b":"#151E36","V":"#2E3D63","P":"#1F2937","K":"#F8FAFC","k":"#94A3B8","p":"#161D27"}},{"name":"Personalizado 2","hair":"goatee","rows":["....HHHHHHHH....","...HHHHHHHHHH...","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHGGGGGGGGGGHH.",".HGgLLLGGgLLLGH.",".SSGLLGSSGLLGsS.",".SSSSSSSSSSSSsS.","..SSSUUUUUUSSs..","..SSSSSmmSSSSs..","...ssSUUUUSss...","....BBBBBBBB....","..SBBBBAABBBbS..","..SBBBAAAABBbS..","...BBBBBBBBbb...","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#F6CBA4","s":"#CEAA89","H":"#2B1B12","h":"#3B2A1E","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#F59A8B","m":"#8A2E22","G":"#111114","N":"#1F2937","U":"#3A2A1E","L":"#1C1C22","g":"#4B5563","B":"#F8FAFC","b":"#CBD5E1","A":"#8B5CF6","P":"#1E293B","K":"#F8FAFC","k":"#94A3B8","p":"#151D2A"}},{"name":"Ninja","hair":"ninja","rows":["....OOOOOOOO....","...OOOOOOOOOO...","..OOOOOOOOOOOO..",".QQQQQQQQQQQQQQQ",".OSSSSSSSSSSSsOQ",".OSSDWSSSSDWSsQQ",".OSSDDSSSSDDSsOQ",".OOOOOOOOOOOOOO.",".OOOOOOOOOOOOOO.","..OOOOOOOOOOOO..","...OOOOOOOOOO...","....BBBBBBBB....","..SBBBBAABBBbS..","..SBBBAAAABBbS..","...BBBBBBBBbb...","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#8D5A3B","s":"#764B31","H":"#111111","h":"#646464","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#B15047","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","O":"#2E2A45","Q":"#8B5CF6","B":"#312E4A","A":"#A78BFA","P":"#231F36","K":"#141220","b":"#232135","p":"#191626","k":"#0E0C17","o":"#211E31"}},{"name":"Back-end","hair":"beard","rows":["....NNNNNNNN....","...SSWWSSSSSs...","..SSSSSSSSSSSs..",".SSSSSSSSSSSSss.","NSSHHSSSSHHSSsSN","NNSSDWSSSSDWSsNN","NNSSDDSSSSDDSsNN","NNSXDDSSSSDDXsNN","N.HSSSSmmSSSSH.N","..HHHHHHHHHHHH..","...HHHHHHHHHH...","....BBBBBBBB....","..SBBBBAABBBbS..","..SBBBAAAABBbS..","...BBBBBBBBbb...","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#E0A878","s":"#BC8D64","H":"#5B3A1E","h":"#947E6C","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#E7836E","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","B":"#4338CA","A":"#22D3EE","P":"#111827","K":"#E5E7EB","k":"#9CA3AF","b":"#302891","p":"#0C111C"}},{"name":"Mobile","hair":"long","rows":["....HHHHHHHH....","...HHHHHHhhHH...","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHGGGGSSGGGGHH.",".HSGDWGGGGDWGsH.",".HSGDDGSSGDDGsH.",".HSGGGGSSGGGGsH.",".HSSSSSmmSSSSsH.",".HHSSSSSSSSSsHH.",".HH.ssSSSSss.HH.","....BBBBBBBB....","..SBBBBAABBBbS..","..SBBBAAAABBbS..","...BBBBBBBBbb...","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#F6CBA4","s":"#CEAA89","H":"#B45309","h":"#CE8F5F","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#F59A8B","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","B":"#A78BFA","A":"#F472B6","P":"#1E293B","K":"#FFFFFF","k":"#A5B4FC","b":"#7864B4","p":"#151D2A"}}]},{"key":"QA","label":"QA","color":"#14B8A6","variants":[{"name":"Personalizado","hair":"qaglasses","rows":[".......HHHHHH...","....HHHHHhhhHH..","..HHHHHHHHHhHH..",".HHHHHHHHHHHHHH.",".HHSSSSSSSSSSHH.",".HGGGGGSSGGGGGH.",".SGWDlGGGGWDlGs.",".SGlDlGSSGlDlGs.",".SGGGGGSSGGGGGs.","..SSSmWWWWmSSs..","...ssSSSSSSss...","....EEEBBEEE....","..SEEEEBBEEEeSLL","..SEEEEEEEEeSLgL","...EEEEEEEee..L.","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#F6CBA4","s":"#CEAA89","H":"#161616","h":"#676767","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#F59A8B","m":"#8A2E22","G":"#16161A","N":"#1F2937","l":"#E9E0D5","E":"#7F1D3A","e":"#64162E","B":"#4C1024","L":"#94A3B8","g":"#7DD3FC","P":"#1E293B","K":"#0F172A","b":"#360B19","p":"#151D2A","k":"#0A101E"}},{"name":"Personalizado 2","hair":"fadebeard","rows":["....HHHHHHHH....","...HHHHHHHHHH...","..HHHHHHHHHHHH..",".hHHHHHHHHHHHHh.",".hSSSSSSSSSSSsh.",".SSHHHSSSSHHHsS.",".SSSDWSSSSDWSsS.",".SSSDDSSSSDDSsS.",".USSUUUUUUUUSsU.",".UUSSSmmmmSSsUU.","..UUUUUUUUUUUU..","....CCJJJJCC....","..SJJJJJJJJjjSLL","..SJJJJnJJJjSLgL","...JJJJJJJjj..L.","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#C68A5E","s":"#A6734E","H":"#141414","h":"#644935","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#D66F5E","m":"#6B2A20","G":"#E5E7EB","N":"#1F2937","U":"#1A1410","J":"#1E2A4A","j":"#151E36","C":"#93C5FD","n":"#0F172A","L":"#94A3B8","g":"#7DD3FC","P":"#111827","K":"#0A0A0A","k":"#27272A","p":"#0C111C","c":"#698DB6"}},{"name":"Automação","hair":"short","rows":["....NNNNNNNN....","...HHHHHHHHHH...","..HHHHHHhhHHHH..",".HHHHHHHHHHHHHH.","NHHSSHSSSSSHSHHN","NNSSDWSSSSDWSsNN","NNSSDDSSSSDDSsNN","NNSXDDSSSSDDXsNN","N.SSSSSmmSSSSs.N","..SSSSSSSSSSSs..","...ssSSSSSSss...","....WWWBBWWW....","..SWWWWBBWWWwSLL","..SWWWWWWWWwSLgL","...WWWWWWWww..L.","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#F6CBA4","s":"#CEAA89","H":"#E8B94A","h":"#F0D189","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#F59A8B","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","B":"#2DD4BF","L":"#94A3B8","g":"#7DD3FC","P":"#334155","K":"#0F172A","b":"#209889","p":"#242E3D","k":"#0A101E"}},{"name":"Robô","hair":"robot","rows":[".......AA.......",".......NN.......","...MMMMMMMMMM...","..MMMMMMMMMMMMm.",".NMVVVVVVVVVVMmN",".NMVVEEVVEEVVMmN",".NMVVEEVVEEVVMmN",".NMVVVVVVVVVVMmN","..MVVVEEEEVVVMm.","..MMMMMMMMMMMMm.",".....NNNNNN.....","...MMMMMMMMMM...",".NNMMMAAMMMMmNLL",".NNMMMMMMMMMmLgL","...MMMMMMMMmm.L.","....NNNN.NNnN...","...MMMMM.MMMMm..","...mmmmm.mmmmm.."],"pal":{"S":"#E0A878","s":"#BC8D64","H":"#111111","h":"#646464","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#E7836E","m":"#64748B","G":"#E5E7EB","N":"#334155","M":"#94A3B8","n":"#1E293B","V":"#0F172A","E":"#5EEAD4","A":"#14B8A6","L":"#E2E8F0","g":"#7DD3FC"}},{"name":"Performance","hair":"bun","rows":["......HHHH......","......HhHH......","...HHHHHHHHHH...","..HHHHHHHHHHHH..",".HHSSSSSSSSSHHH.",".HSSDWSSSSDWSsH.",".HSSDDSSSSDDSsH.",".HSXDDSSSSDDXsH.",".HSSSSSmmSSSSsH.","..SSSSSSSSSSSs..","...ssSSSSSSss...","....WWWBBWWW....","..SWWWWBBWWWwSLL","..SWWWWWWWWwSLgL","...WWWWWWWww..L.","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#E0A878","s":"#BC8D64","H":"#7C2D12","h":"#A97664","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#E7836E","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","B":"#5EEAD4","L":"#94A3B8","g":"#7DD3FC","P":"#334155","K":"#134E4A","b":"#43A898","p":"#242E3D","k":"#0D3835"}}]},{"key":"PO","label":"PO","color":"#F59E0B","variants":[{"name":"Personalizado","hair":"shortbeard","rows":["....HHHHHHHH....","...HHHHHHhhHH...","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHSSSSSSSSSSHH.",".HSGDWGGGGDWGsH.",".SSGDDGSSGDDGsS.",".SSGGGGSSGGGGsS.","..USSSSmmSSSSU..","..UUUUUUUUUUUU..","...UUUUUUUUUU...","....JJJTTJJJ....","..SJJJJTTJJjjSYY","..SJJJJJJJJjSYYY","...JJJJJJJJjj...","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#E0A878","s":"#BC8D64","H":"#141414","h":"#666666","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#E7836E","m":"#8A2E22","G":"#2A2A2E","N":"#1F2937","U":"#4A3A30","J":"#1F2A44","T":"#F8FAFC","Y":"#F59E0B","P":"#1F2A44","K":"#111111","j":"#161E30","p":"#161E30","k":"#0C0C0C"}},{"name":"Clássica","hair":"bun","rows":["......HHHH......","......HhHH......","...HHHHHHHHHH...","..HHHHHHHHHHHH..",".HHSSSSSSSSSHHH.",".HSSDWSSSSDWSsH.",".HSSDDSSSSDDSsH.",".HSXDDSSSSDDXsH.",".HSSSSSmmSSSSsH.","..SSSSSSSSSSSs..","...ssSSSSSSss...","....JJJTTJJJ....","..SJJJJJJJJjjSYY","..STTTTTTTTTTSYY","..JJJJJJJJJJjj..",".JJJJJJJJJJJjjj.","....SSS..SSs....","...KKKK..KKKK..."],"pal":{"S":"#E0A878","s":"#BC8D64","H":"#2B1B12","h":"#756A64","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#E7836E","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","J":"#F59E0B","T":"#FFF7ED","Y":"#FDE047","P":"#44403C","K":"#1C1917","j":"#B07107","p":"#302E2B","k":"#141210"}},{"name":"Roqueiro","hair":"long","rows":["....HHHHHHHH....","...HHHHHHhhHH...","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHSSSSSSSSSHHH.",".HSGGGGSSGGGGsH.",".HSGGGGGGGGGGsH.",".HSXGGSSSSGGXsH.",".HSSSSSmmSSSSsH.",".HHSSSSSSSSSsHH.",".HH.ssSSSSss.HH.","....JJJTTJJJ....","..SJJJTTTTJjjSN.","..SJJJTTTTJjjYYN","...JJJJJJJjjYYY.","....PPPP.PPpYY..","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#C68A5E","s":"#A6734E","H":"#111111","h":"#2A2A2E","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#D66F5E","m":"#8A2E22","G":"#0A0A0A","N":"#78350F","J":"#1C1C22","T":"#F59E0B","Y":"#B91C1C","P":"#1F2937","K":"#0A0A0A","k":"#27272A","j":"#141418","p":"#161D27"}},{"name":"Visionário","hair":"slick","rows":["....HHHHHHHH....","...HHHHHHHHHH...","..HHHHHHhhhHHH..",".HHHHHHSSSSSSHH.",".HSSSSSSSSSSSsH.",".HSSDWSSSSDWSsH.",".SSSDDSSSSDDSsS.",".SSXDDSSSSDDXsS.","..SSSSSmmSSSSs..","..SSSSSSSSSSSs..","...ssSSSSSSss...","....JJJTTJJJ....","..SJJJJTTJJjjSYY","..SJJJJJJJJjSYYY","...JJJJJJJJjj...","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#F6CBA4","s":"#CEAA89","H":"#B45309","h":"#CE8F5F","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#F59A8B","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","J":"#FBBF24","T":"#FFFFFF","Y":"#A3E635","P":"#44403C","K":"#78350F","j":"#B48919","p":"#302E2B","k":"#56260A"}},{"name":"Estratégica","hair":"long","rows":["....HHHHHHHH....","...HHHHHHhhHH...","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHSSSSSSSSSHHH.",".HSSDWSSSSDWSsH.",".HSSDDSSSSDDSsH.",".HSXDDSSSSDDXsH.",".HSSSSSmmSSSSsH.",".HHSSSSSSSSSsHH.",".HH.ssSSSSss.HH.","....JJJTTJJJ....","..SJJJJTTJJjjSYY","..SJJJJJJJJjSYYY","...JJJJJJJJjj...","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#C68A5E","s":"#A6734E","H":"#E8B94A","h":"#F0D189","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#D66F5E","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","J":"#D97706","T":"#FFF7ED","Y":"#F9A8D4","P":"#292524","K":"#1C1917","j":"#9C5504","p":"#1D1A19","k":"#141210"}}]},{"key":"COM","label":"COMERCIAL","color":"#EF4444","variants":[{"name":"Executivo de contas","hair":"slick","rows":["....HHHHHHHH....","...HHHHHHHHHH...","..HHHHHHhhhHHH..",".HHHHHHSSSSSSHH.",".HSSSSSSSSSSSsH.",".HSSDWSSSSDWSsH.",".SSSDDSSSSDDSsS.",".SSXDDSSSSDDXsS.","..SSSSSmmSSSSs..","..SSSSSSSSSSSs..","...ssSSSSSSss...","....JJWTTWJJ....","..SJJJWTTWJjjSF.","..SJJJJTTJJjjSFf","...JJJJJJJJjjFF.","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#F6CBA4","s":"#CEAA89","H":"#2B1B12","h":"#756A64","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#F59A8B","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","J":"#DC2626","T":"#1E293B","F":"#111827","f":"#38BDF8","P":"#1F2937","K":"#111827","j":"#9E1B1B","p":"#161D27","k":"#0C111C"}},{"name":"SDR","hair":"short","rows":["....NNNNNNNN....","...HHHHHHHHHH...","..HHHHHHhhHHHH..",".HHHHHHHHHHHHHH.","NHHSSHSSSSSHSHHN","NNSSDWSSSSDWSsNN","NNSSDDSSSSDDSsNN","NNSXDDSSSSDDXsNN","N.SSSSSmmSSSSs.N","..SSSSSSSSSSSs..","...ssSSSSSSss...","....JJWTTWJJ....","..SJJJWTTWJjjSF.","..SJJJJTTJJjjSFf","...JJJJJJJJjjFF.","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#E0A878","s":"#BC8D64","H":"#B45309","h":"#CE8F5F","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#E7836E","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","J":"#EF4444","T":"#FDE047","F":"#111827","f":"#38BDF8","P":"#1F2937","K":"#111827","j":"#AC3030","p":"#161D27","k":"#0C111C"}},{"name":"Cowboy","hair":"short","rows":[".....QQQQQQ.....","....QQQQQQQQ....","....qqqqqqqq....","QQQQQQQQQQQQQQQQ",".HHSSHSSSSSHSHH.",".HSSDWSSSSDWSsH.",".SSSDDSSSSDDSsS.",".SSXDDSSSSDDXsS.","..SSSSSmmSSSSs..","..SSSSSSSSSSSs..","...ssSSSSSSss...","....VVRRRRVV....","..SVVERRRVVvvSL.","..SVVEEEEVVvvLLL","...VVnZZnVVvv.L.","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#E0A878","s":"#BC8D64","H":"#5B3A1E","h":"#947E6C","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#E7836E","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","Q":"#8B5A2B","q":"#3F2A14","V":"#7C4A1E","v":"#5C3614","R":"#DC2626","E":"#F5E6C8","n":"#3F2A14","Z":"#FBBF24","L":"#D6B37A","P":"#1E40AF","K":"#5C3614","k":"#3F2A14","p":"#152E7E"}},{"name":"Gerente de vendas","hair":"bun","rows":["......HHHH......","......HhHH......","...HHHHHHHHHH...","..HHHHHHHHHHHH..",".HHSSSSSSSSSHHH.",".HSSDWSSSSDWSsH.",".HSSDDSSSSDDSsH.",".HSXDDSSSSDDXsH.",".HSSSSSmmSSSSsH.","..SSSSSSSSSSSs..","...ssSSSSSSss...","....JJWTTWJJ....","..SJJJWTTWJjjSF.","..SJJJJTTJJjjSFf","...JJJJJJJJjjFF.","....PPPP.PPpP...","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#C68A5E","s":"#A6734E","H":"#3B2A20","h":"#7F746E","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#D66F5E","m":"#BE185D","G":"#E5E7EB","N":"#1F2937","J":"#991B1B","T":"#FBBF24","F":"#111827","f":"#38BDF8","P":"#111827","K":"#000000","j":"#6E1313","p":"#0C111C","k":"#000000"}},{"name":"Astronauta","hair":"astro","rows":["....WWWWWWWW....","..WWWWWWWWWWWW..",".WWWWWWWWWWWWWw.","WWWGGGGGGGGGGWww","WWGgHHHHHHHHSGww","WWGgSDWSSDWSSGww","WWGSSDDSSDDSsGww","WWGSXSSmmSSXsGww","WWGGGGGGGGGGGGww",".WWWWWWWWWWWWWw.","..wRRRRRRRRRRw..","..PWWWWWWWWWWwP.",".WPWWRRWWWWWwPW.",".WPWWFfWWWWWwPW.","..PWWWWWWWWWwwP.","...WWWW..WWww...","...RRRRR.RRRRr..","...kkkkk.kkkkk.."],"pal":{"S":"#E0A878","s":"#BC8D64","H":"#2B1B12","h":"#756A64","D":"#111111","W":"#F1F5F9","w":"#CBD5E1","X":"#E7836E","m":"#8A2E22","G":"#94A3B8","N":"#1F2937","g":"#BAE6FD","R":"#EF4444","r":"#B91C1C","P":"#64748B","F":"#22D3EE","f":"#FDE047","k":"#7F1D1D","p":"#485364"}}]}],"bosses":[{"name":"Executivo","hair":"slick","rows":["....HHHHHHHH....","...HHHHHHHHHH...","..HHHHHHhhhHHH..",".HHHHHHSSSSSSHH.",".HSSSSSSSSSSSsH.",".HSSDWSSSSDWSsH.",".SSSDDSSSSDDSsS.",".SSXDDSSSSDDXsS.","..SSSSSmmSSSSs..","..SSSSSSSSSSSs..","...ssSSSSSSss...","....JJWRRWJJ....","..SJJJWRRWJjjS..","..SJJJJRRJJjjS$$","...JJJJJJJJjj$$$","....PPPP.PPpP$$$","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#F6CBA4","s":"#CEAA89","H":"#9CA3AF","h":"#BEC3CB","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#F59A8B","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","J":"#1E3A8A","R":"#DC2626","P":"#1E3A8A","K":"#111827","$":"#92400E","j":"#152963","p":"#152963","k":"#0C111C"}},{"name":"Startup","hair":"short","rows":["....HHHHHHHH....","...HHHHHHHHHH...","..HHHHHHhhHHHH..",".HHHHHHHHHHHHHH.",".HHGGGGSSGGGGHH.",".HSGDWGGGGDWGsH.",".SSGDDGSSGDDGsS.",".SSGGGGSSGGGGsS.","..SSSSSmmSSSSs..","..SSSSSSSSSSSs..","...ssSSSSSSss...","....JJWRRWJJ....","..SJJJWRRWJjjS..","..SJJJJRRJJjjS$$","...JJJJJJJJjj$$$","....PPPP.PPpP$$$","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#8D5A3B","s":"#764B31","H":"#111111","h":"#646464","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#B15047","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","J":"#475569","R":"#EF4444","P":"#334155","K":"#111827","$":"#B45309","j":"#333D4B","p":"#242E3D","k":"#0C111C"}},{"name":"Investidora","hair":"long","rows":["....HHHHHHHH....","...HHHHHHhhHH...","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHSSSSSSSSSHHH.",".HSSDWSSSSDWSsH.",".HSSDDSSSSDDSsH.",".HSXDDSSSSDDXsH.",".HSSSSSmmSSSSsH.",".HHSSSSSSSSSsHH.",".HH.ssSSSSss.HH.","....JJWRRWJJ....","..SJJJWRRWJjjS..","..SJJJJRRJJjjS$$","...JJJJJJJJjj$$$","....PPPP.PPpP$$$","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#E0A878","s":"#BC8D64","H":"#7C2D12","h":"#A97664","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#E7836E","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","J":"#7F1D1D","R":"#FBBF24","P":"#450A0A","K":"#111827","$":"#1F2937","j":"#5B1414","p":"#310707","k":"#0C111C"}},{"name":"Dono da empresa","hair":"beard","rows":["....SSSSSSSS....","...SSWWSSSSSs...","..SSSSSSSSSSSs..",".SSSSSSSSSSSSss.",".SSHHSSSSHHSSsS.",".SSSDWSSSSDWSsS.",".SSSDDSSSSDDSsS.",".SSXDDSSSSDDXsS.","..HSSSSmmSSSSH..","..HHHHHHHHHHHH..","...HHHHHHHHHH...","....JJWRRWJJ....","..SJJJWRRWJjjS..","..SJJJJRRJJjjS$$","...JJJJJJJJjj$$$","....PPPP.PPpP$$$","...KKKKK.KKKKk..","...kkkkk.kkkkk.."],"pal":{"S":"#C68A5E","s":"#A6734E","H":"#D1D5DB","h":"#E1E3E7","D":"#111111","W":"#F8FAFC","w":"#CBD5E1","X":"#D66F5E","m":"#8A2E22","G":"#E5E7EB","N":"#1F2937","J":"#1F2937","R":"#DC2626","P":"#111827","K":"#000000","$":"#92400E","j":"#161D27","p":"#0C111C","k":"#000000"}}]};
+
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#12131A');
+scene.fog = new THREE.Fog('#12131A', 140, 260);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000);
+camera.position.set(30, 40, 92);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 11, 0);
+controls.enableDamping = true;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.8;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.minDistance = 40; controls.maxDistance = 200;
+
+scene.add(new THREE.HemisphereLight('#dbe4ff', '#2a2233', 1.4));
+const sun = new THREE.DirectionalLight('#fff4e0', 2.2);
+sun.position.set(40, 80, 50);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, near: 1, far: 250 });
+scene.add(sun);
+const rim = new THREE.DirectionalLight('#8b5cf6', 0.8); rim.position.set(-50, 30, -60); scene.add(rim);
+
+const box = new THREE.BoxGeometry(1, 1, 1);
+const mat = new THREE.MeshStandardMaterial({ roughness: 0.75, metalness: 0.05 });
+
+function instanced(cubes) {
+  const mesh = new THREE.InstancedMesh(box, mat, cubes.length);
+  const m = new THREE.Matrix4(); const c = new THREE.Color();
+  cubes.forEach((q, i) => {
+    m.makeTranslation(q[0], q[1], q[2]);
+    mesh.setMatrixAt(i, m);
+    mesh.setColorAt(i, c.set(q[3]));
+  });
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  mesh.instanceMatrix.needsUpdate = true;
+  return mesh;
+}
+
+// ---------- voxel character
+const HAIRKEYS = new Set(['H', 'h', 'O', 'o', 'Q', 'q', 'C', 'c', 'V', 'Z', 'N']);
+const HELD = new Set(['Y', 'L', 'g', 'F', 'f', '$']);
+function backColor(v) {
+  const p = v.pal;
+  if (v.hair === 'beard') return p.S;
+  if (v.hair === 'astro') return p.W;
+  if (v.hair === 'robot') return p.M;
+  if (v.hair === 'ninja') return p.O;
+  return p.H;
+}
+function mainBody(v) {
+  const n = {};
+  for (let r = 11; r <= 14; r++) for (const ch of v.rows[r]) if (ch !== '.' && ch !== 'S' && !HELD.has(ch)) n[ch] = (n[ch] || 0) + 1;
+  return Object.entries(n).sort((a, b) => b[1] - a[1])[0][0];
+}
+function buildChar(v) {
+  const cubes = []; const p = v.pal; const rows = v.rows; const Hh = rows.length;
+  const back = backColor(v); const main = p[mainBody(v)];
+  for (let r = 0; r < Hh; r++) {
+    const isHead = r <= 10, isBody = r >= 11 && r <= 14;
+    for (let c = 0; c < 16; c++) {
+      const ch = rows[r][c]; if (ch === '.') continue;
+      let depth = isHead ? 10 : isBody ? 6 : 5;
+      let z0 = 0;
+      if (isBody && HELD.has(ch)) { depth = 2; z0 = 2; }
+      else if (isBody && ch === 'S') { depth = 3; z0 = 1.5; }
+      for (let z = 0; z < depth; z++) {
+        let col = p[ch];
+        if (z > 0) {
+          if (isHead) {
+            if (v.hair === 'robot') col = HAIRKEYS.has(ch) || ch === 'M' || ch === 'm' ? p[ch] : p.M;
+            else if (HAIRKEYS.has(ch) && !(v.hair === 'astro' && ch === 'Z')) col = p[ch];
+            else if (v.hair === 'astro') col = (ch === 'W' || ch === 'w' || ch === 'G' || z >= 3) ? (ch === 'G' && z < 3 ? p.G : p.W) : p.S;
+            else col = z >= depth * 0.45 ? back : p.S;
+          } else if (isBody && !HELD.has(ch) && ch !== 'S') {
+            col = z >= 1 ? main : p[ch];
+          }
+        }
+        const zz = (isHead ? 5 : isBody ? 3 : 2.5) - z0 - z - 0.5;
+        cubes.push([c - 7.5, Hh - r - 0.5, zz, col]);
+      }
+    }
+  }
+  const g = new THREE.Group(); g.add(instanced(cubes));
+  return g;
+}
+
+// ---------- arena floor + props
+const props = new THREE.Group(); scene.add(props);
+(function buildArena() {
+  const cubes = [];
+  const N = 9;
+  for (let i = -N; i <= N; i++) for (let j = -4; j <= 4; j++) {
+    const col = (i + j) % 2 === 0 ? '#2A2D3E' : '#262938';
+    for (let x = 0; x < 6; x++) for (let z = 0; z < 6; z++) cubes.push([i * 6 + x - 2.5, -0.5, j * 6 + z - 2.5, col]);
+  }
+  const rack = (cx, cz) => { for (let x = 0; x < 6; x++) for (let z = 0; z < 6; z++) for (let y = 0; y < 6; y++) {
+      let col = '#4A5272'; if (y === 5) col = '#6A7398'; if ((y === 1 || y === 3) && z === 5 && x > 0 && x < 5) col = '#2B3044';
+      if (z === 5 && ((y === 1 && x === 1) || (y === 3 && x === 2))) col = y === 1 ? '#4ADE80' : '#FBBF24';
+      cubes.push([cx + x - 2.5, y + 0.5, cz + z - 2.5, col]); } };
+  const crate = (cx, cz) => { for (let x = 0; x < 6; x++) for (let z = 0; z < 6; z++) for (let y = 0; y < 5; y++) {
+      let col = '#B9824A'; if (y === 4) col = '#D9A066'; if (x === 2 || x === 3) col = '#EBCB95';
+      if (z === 5 && y >= 1 && y <= 2 && x >= 1 && x <= 4 && !(x === 2 || x === 3)) col = '#F5F5F4';
+      cubes.push([cx + x - 2.5, y + 0.5, cz + z - 2.5, col]); } };
+  rack(-48, -18); rack(48, -18); rack(-48, 18); rack(48, 18); rack(0, -24);
+  crate(-36, -24); crate(36, -24); crate(-54, 0); crate(54, 0); crate(24, 18);
+  props.add(instanced(cubes));
+  const bomb = new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 10), new THREE.MeshStandardMaterial({ color: '#1E1B2E', roughness: 0.4, flatShading: true }));
+  bomb.position.set(-24, 2.6, 18); bomb.castShadow = true; props.add(bomb);
+  const fuse = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.6, 0.6), new THREE.MeshStandardMaterial({ color: '#A16207' }));
+  fuse.position.set(-24, 5.8, 18); props.add(fuse);
+  const spark = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: '#FDE047' }));
+  spark.position.set(-24, 7, 18); props.add(spark);
+  props.userData.spark = spark;
+})();
+
+// ---------- lineup
+const slots = [-30, -10, 10, 30];
+const current = DATA.roles.map(() => 0);
+let lineup = [];
+let mode = 'team';
+function clearLineup() { lineup.forEach(g => { scene.remove(g); g.traverse(o => { if (o.isInstancedMesh) o.dispose(); }); }); lineup = []; }
+function place(list) {
+  clearLineup();
+  list.forEach((v, i) => { const g = buildChar(v); g.position.x = slots[i]; g.rotation.y = (i - 1.5) * -0.12; scene.add(g); lineup.push(g); });
+}
+function render() {
+  if (mode === 'team') place(DATA.roles.map((r, i) => r.variants[current[i]]));
+  else place(DATA.bosses);
+}
+
+// ---------- UI
+const dock = document.getElementById('dock');
+DATA.roles.forEach((r, ri) => {
+  const el = document.createElement('section');
+  el.className = 'role'; el.style.setProperty('--c', r.color);
+  const h = document.createElement('h2'); h.textContent = r.label;
+  const nm = document.createElement('span'); nm.textContent = r.variants[0].name; h.appendChild(nm);
+  const chips = document.createElement('div'); chips.className = 'chips';
+  r.variants.forEach((v, vi) => {
+    const b = document.createElement('button'); b.className = 'chip'; b.type = 'button';
+    b.textContent = String(vi + 1); b.title = v.name; b.setAttribute('aria-label', r.label + ': ' + v.name);
+    b.setAttribute('aria-pressed', vi === 0 ? 'true' : 'false');
+    b.addEventListener('click', () => {
+      current[ri] = vi; nm.textContent = v.name;
+      chips.querySelectorAll('.chip').forEach((x, xi) => x.setAttribute('aria-pressed', xi === vi ? 'true' : 'false'));
+      render();
+    });
+    chips.appendChild(b);
+  });
+  el.append(h, chips); dock.appendChild(el);
+});
+const tTeam = document.getElementById('tTeam'), tBoss = document.getElementById('tBoss'), tSpin = document.getElementById('tSpin');
+function setMode(m) { mode = m; tTeam.setAttribute('aria-pressed', m === 'team'); tBoss.setAttribute('aria-pressed', m === 'boss'); dock.classList.toggle('boss', m === 'boss'); render(); }
+tTeam.addEventListener('click', () => setMode('team'));
+tBoss.addEventListener('click', () => setMode('boss'));
+tSpin.addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; tSpin.setAttribute('aria-pressed', controls.autoRotate); });
+
+function resize() { const w = window.innerWidth, h = window.innerHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+window.addEventListener('resize', resize); resize();
+render();
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const t = clock.getElapsedTime();
+  lineup.forEach((g, i) => { g.position.y = Math.max(0, Math.sin(t * 3 + i * 1.3)) * 0.8; });
+  const s = props.userData.spark; s.scale.setScalar(0.8 + Math.abs(Math.sin(t * 8)) * 0.6);
+  controls.update(); renderer.render(scene, camera);
+});
+window.__ready = true;
+</script>
+</body>
+</html>

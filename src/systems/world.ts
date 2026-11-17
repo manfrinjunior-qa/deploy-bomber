@@ -8,8 +8,8 @@ import type { FloorItem } from '../entities/Item';
 import { createPlayer, speedOf, type Player, type PlayerCarry } from '../entities/Player';
 import { computeBlast, type FlameDir } from './explosions';
 import { rollDrop } from './drops';
-import { BOX_LABELS, BOX_NEXT_STAGE, BOX_TEXT_COLOR, Grid, TILE } from './grid';
-import { applyItem, revertItem } from './items';
+import { BOX_LABELS, BOX_NEXT_STAGE, BOX_TEXT_COLOR, Grid, TILE, boxLabelId, randomBoxLabel } from './grid';
+import { applyItem, consumeItem, revertItem } from './items';
 import { useSpecial } from './specials';
 import { spawnEnemy, updateBoss, updateEnemies } from './ai';
 
@@ -17,7 +17,7 @@ export interface WorldConfig {
   mode: GameMode;
   map: string[];
   theme: Theme;
-  stageId: number; // 1..5 (0 = Desafio do Cliente)
+  stageId: number; // 1..5 (0 = Desafio do Cliente / Modo Zumbi)
   stageName: string;
   arenaLabel: string;
   enemyTypes: EnemyType[];
@@ -27,7 +27,26 @@ export interface WorldConfig {
   carry?: PlayerCarry[];
   lives: number;
   seed?: number;
+  /** tempo da arena em segundos (padrão: 180) */
+  time?: number;
+  /** Modo Zumbi: noite 1..5 */
+  night?: number;
+  /** Modo Zumbi: cota de ajudantes; o chefão só aparece quando todos caem */
+  helpers?: number;
 }
+
+/** Modo Zumbi: quanto tempo dura a mordida e o quanto ela (e a areia) deixam lento. */
+export const BITE_TIME = 6;
+export const ZOMBIE_SLOW = 0.55;
+export const SAND_SLOW = 0.6;
+/** Noite 1: a lua cheia vem a cada 30 s e dura 10 s, com zumbis 50% mais rápidos. */
+export const MOON_EVERY = 30;
+export const MOON_TIME = 10;
+export const MOON_BOOST = 1.5;
+/** ajudantes: quantos começam no mapa, de quanto em quanto tempo chega outro e quantos ficam vivos ao mesmo tempo */
+const HELPERS_AT_START = 3;
+const HELPER_EVERY = 5;
+const HELPERS_ALIVE_MAX = 5;
 
 export interface LogEntry {
   who: string;
@@ -84,12 +103,25 @@ export class World {
   outcome: Outcome = null;
   outcomeT = 0;
   winner = -1;
+  // Modo Zumbi
+  lanternT = 0; // Lanterna: mapa iluminado
+  sandT = 0; // Tempestade de areia: mapa escondido
+  moonT = 0; // lua cheia ativa
+  moonAcc = 0;
+  zapAcc = 0; // raios do laboratório
+  horde: { quota: number; spawned: number; acc: number; bossShown: boolean } | null = null;
   private nextId = 1;
 
   constructor(cfg: WorldConfig) {
     this.cfg = cfg;
     this.rng = makeRng(cfg.seed ?? Math.floor(Math.random() * 1e9));
     this.grid = Grid.fromMap(cfg.map, this.rng);
+    this.time = cfg.time ?? ARENA_TIME;
+    if (cfg.mode === 'zombie') {
+      // abóboras quebram na primeira explosão (o quadro kanban é coisa do escritório)
+      const g = this.grid;
+      for (let i = 0; i < g.tiles.length; i++) if (g.tiles[i] === TILE.Box) g.label[i] = this.newBoxLabel();
+    }
 
     for (const s of cfg.players) {
       const p = createPlayer(s.slot, s.role, s.variant, this.grid.spawns[s.slot], cfg.lives);
@@ -105,13 +137,29 @@ export class World {
         p.go = c.go;
         p.followUp = c.followUp;
         p.bugs = c.bugs;
+        p.holy = c.holy ?? 0;
+        p.silver = c.silver ?? false;
       }
       this.players.push(p);
     }
 
+    if (cfg.mode === 'zombie') {
+      const quota = cfg.helpers ?? 5;
+      this.horde = { quota, spawned: 0, acc: 0, bossShown: false };
+      const far = this.floorTiles((x, y) => this.grid.spawns.every((s) => Math.abs(s.x - x) + Math.abs(s.y - y) >= 6));
+      shuffle(this.rng, far);
+      for (let i = 0; i < Math.min(quota, HELPERS_AT_START) && i < far.length; i++) this.spawnHelper(far[i].x, far[i].y);
+      this.say('SISTEMA', SYS_COLOR, cfg.arenaLabel.toUpperCase(), 'a noite começou');
+      return;
+    }
     if (cfg.mode !== 'battle') this.spawnInitialEnemies(cfg.enemyCount, cfg.enemyTypes);
     if (cfg.bossId) this.spawnBoss(cfg.bossId);
     this.say('SISTEMA', SYS_COLOR, cfg.arenaLabel.toUpperCase(), cfg.mode === 'battle' ? 'último de pé vence' : 'sprint iniciada');
+  }
+
+  /** Rótulo de uma caixa nova: no Modo Zumbi toda abóbora quebra de primeira. */
+  newBoxLabel() {
+    return this.cfg.mode === 'zombie' ? boxLabelId('FIXME') : randomBoxLabel(this.rng);
   }
 
   // ───────────────────────────── helpers
@@ -178,9 +226,140 @@ export class World {
     for (let i = 0; i < count && i < far.length; i++) spawnEnemy(this, pick(this.rng, types), far[i].x, far[i].y);
   }
 
-  private spawnBoss(id: string) {
+  // ───────────────────────────── Modo Zumbi: ajudantes e chefão
+  private spawnHelper(x: number, y: number) {
+    const h = this.horde!;
+    const e = spawnEnemy(this, pick(this.rng, this.cfg.enemyTypes), x, y);
+    e.helper = true;
+    h.spawned++;
+    return e;
+  }
+
+  /** Ajudantes vivos no mapa. */
+  helpersAlive() {
+    return this.enemies.filter((e) => e.helper && !e.dead).length;
+  }
+
+  /** Ajudantes derrotados até agora (os que ainda não chegaram contam como de pé). */
+  helpersDown() {
+    const h = this.horde;
+    return h ? h.spawned - this.helpersAlive() : 0;
+  }
+
+  private updateHorde(dt: number) {
+    const h = this.horde;
+    if (!h) return;
+    // noite 1: lua cheia
+    if (this.cfg.night === 1) {
+      if (this.moonT > 0) this.moonT = Math.max(0, this.moonT - dt);
+      else {
+        this.moonAcc += dt;
+        if (this.moonAcc >= MOON_EVERY) {
+          this.moonAcc = 0;
+          this.moonT = MOON_TIME;
+          this.say('SISTEMA', SYS_COLOR, 'LUA CHEIA', `zumbis 50% mais rápidos por ${MOON_TIME} s`);
+          this.events.push('howl');
+        }
+      }
+    }
+    if (h.bossShown) return;
+    // novos ajudantes saem de túmulos / sarcófagos até completar a cota
+    if (h.spawned < h.quota) {
+      h.acc += dt;
+      if (h.acc >= HELPER_EVERY && this.helpersAlive() < HELPERS_ALIVE_MAX) {
+        const tiles = this.floorTiles(
+          (x, y) =>
+            !this.bombAt(x, y) &&
+            this.players.every((p) => !p.alive || Math.abs(p.x - x) + Math.abs(p.y - y) >= 4) &&
+            !this.enemies.some((e) => Math.round(e.x) === x && Math.round(e.y) === y),
+        );
+        if (tiles.length) {
+          h.acc = 0;
+          const t = pick(this.rng, tiles);
+          const e = this.spawnHelper(t.x, t.y);
+          const left = h.quota - h.spawned;
+          const where = ({ 3: 'SARCÓFAGO ABERTO', 4: 'TÚMULO ABERTO', 5: 'ALGO SE MEXE NO ESCURO' } as Record<number, string>)[this.cfg.night ?? 0] ?? `${enemyById(e.type).name.toUpperCase()} À VISTA`;
+          this.say('SISTEMA', SYS_COLOR, where, left ? `${left} ajudante${left > 1 ? 's' : ''} a caminho` : 'último ajudante da noite');
+          this.fx({ kind: 'ring', x: t.x, y: t.y, total: 0.6, color: '#86efac' });
+        }
+      }
+      return;
+    }
+    // cota completa e todos caíram: o chefão aparece
+    if (this.helpersAlive() === 0 && this.cfg.bossId) {
+      h.bossShown = true;
+      const def = bossById(this.cfg.bossId);
+      const c = this.nearestFree(7, 5, (x, y) => this.walkable(x, y) && this.players.every((p) => !p.alive || Math.hypot(p.x - x, p.y - y) >= 3));
+      this.spawnBoss(this.cfg.bossId, c);
+      this.say('SISTEMA', SYS_COLOR, `${def.name.toUpperCase()} APARECEU`, 'todos os ajudantes caíram');
+      this.fx({ kind: 'puff', x: c.x, y: c.y, total: 1, color: '#a855f7' });
+      this.events.push('bossAppear');
+    }
+  }
+
+  /** Mordida: vira zumbi por 6 s (lento e sem bombas). Água benta bloqueia uma. */
+  bite(p: Player): boolean {
+    if (!p.alive || p.zombie > 0 || p.touchCd > 0 || p.coffee > 0 || p.invuln > 0) return false;
+    p.touchCd = 1.5;
+    if (p.holy > 0) {
+      p.holy--;
+      consumeItem(p, 'ab');
+      this.sayP(p, 'usou ÁGUA BENTA', 'mordida bloqueada');
+      this.fx({ kind: 'ring', x: p.x, y: p.y, total: 0.6, color: '#7dd3fc' });
+      return false;
+    }
+    p.zombie = BITE_TIME;
+    this.sayP(p, 'foi mordido!', `zumbi por ${BITE_TIME} s`);
+    this.fx({ kind: 'puff', x: p.x, y: p.y, total: 0.5, color: '#4ade80' });
+    this.events.push('bite');
+    return true;
+  }
+
+  /** Um colega cura o mordido passando por cima. */
+  private updateCures() {
+    for (const p of this.players) {
+      if (!p.alive || p.zombie <= 0) continue;
+      const healer = this.players.find((o) => o !== p && o.alive && o.zombie <= 0 && Math.abs(o.x - p.x) < 0.7 && Math.abs(o.y - p.y) < 0.7);
+      if (!healer) continue;
+      p.zombie = 0;
+      p.touchCd = 1.5;
+      healer.score += 100;
+      this.sayP(healer, `curou o ${roleById(p.role).name}`, 'mordida desfeita');
+      this.fx({ kind: 'ring', x: p.x, y: p.y, total: 0.6, color: '#fde047' });
+      this.events.push('cure');
+    }
+  }
+
+  /**
+   * Quanto um tile está visível (0 a 1). Só cai abaixo de 1 no escuro do Castelo (noite 5)
+   * ou na Tempestade de areia; jogadores, chamas e bombas acesas iluminam em volta.
+   */
+  darkness(): number {
+    if (this.lanternT > 0) return 0;
+    if (this.sandT > 0) return 0.94;
+    return this.cfg.night === 5 ? 0.9 : 0;
+  }
+
+  visibility(x: number, y: number): number {
+    const dark = this.darkness();
+    if (dark <= 0) return 1;
+    const sand = this.sandT > 0;
+    let best = 0;
+    const light = (lx: number, ly: number, r: number) => {
+      const d = Math.hypot(lx - x, ly - y);
+      best = Math.max(best, Math.min(1, Math.max(0, 1 - (d - r) / 1.3)));
+    };
+    for (const p of this.players) if (p.alive) light(p.x, p.y, sand ? 1 : 1.8);
+    if (!sand) {
+      for (const f of this.flames) light(f.x, f.y, 1.5);
+      for (const b of this.bombs) light(b.x, b.y, 0.6);
+    }
+    return best;
+  }
+
+  private spawnBoss(id: string, at?: { x: number; y: number }) {
     const def = bossById(id);
-    const c = this.nearestFree(7, 5);
+    const c = at ?? this.nearestFree(7, 5);
     this.boss = {
       def,
       x: c.x,
@@ -198,6 +377,8 @@ export class World {
       anim: 0,
       lastAttack: '',
       lastAttackT: 0,
+      pending: null,
+      dash: 0,
     };
     this.say('CHEFÃO', BOSS_COLOR, def.name.toUpperCase(), `resistência ${def.resistencia}`);
   }
@@ -215,6 +396,7 @@ export class World {
     }
     this.updateClock(dt);
     for (const p of this.players) this.updatePlayer(p, inputs[p.slot] ?? EMPTY_INPUT, dt);
+    if (this.horde) this.updateCures();
     this.updateBombs(dt);
     this.updateMarkers(dt);
     this.updateFlames(dt, true);
@@ -222,6 +404,7 @@ export class World {
     updateBoss(this, dt);
     this.updatePickups(dt);
     this.updateTiles(dt);
+    this.updateHorde(dt);
     this.updateDeadline(dt);
     this.checkOutcome();
   }
@@ -236,16 +419,18 @@ export class World {
     this.time = Math.max(0, this.time - dt * mul);
     this.revealT = Math.max(0, this.revealT - dt);
     this.enemyFreeze = Math.max(0, this.enemyFreeze - dt);
+    this.lanternT = Math.max(0, this.lanternT - dt);
+    this.sandT = Math.max(0, this.sandT - dt);
     if (this.time <= 0 && !this.deadline) this.startDeadline();
   }
 
   // ───────────────────────────── jogadores
   private updatePlayer(p: Player, input: PlayerInput, dt: number) {
     if (!p.alive) return;
-    const dec = (k: 'invuln' | 'coffee' | 'invert' | 'frozen' | 'stunned' | 'codeReview' | 'copilot' | 'budgetCut' | 'touchCd' | 'specialCd') =>
+    const dec = (k: 'invuln' | 'coffee' | 'invert' | 'frozen' | 'stunned' | 'codeReview' | 'copilot' | 'budgetCut' | 'touchCd' | 'specialCd' | 'zombie' | 'candy') =>
       (p[k] = Math.max(0, p[k] - dt));
     dec('invuln'); dec('coffee'); dec('invert'); dec('frozen'); dec('stunned'); dec('codeReview');
-    dec('copilot'); dec('budgetCut'); dec('touchCd'); dec('specialCd');
+    dec('copilot'); dec('budgetCut'); dec('touchCd'); dec('specialCd'); dec('zombie'); dec('candy');
     p.moving = false;
     if (p.frozen > 0 || p.stunned > 0) return;
 
@@ -256,7 +441,10 @@ export class World {
       dy = -dy;
     }
     if (dx || dy) {
-      const dist = speedOf(p) * dt;
+      let mul = 1;
+      if (p.zombie > 0) mul *= ZOMBIE_SLOW;
+      if (this.grid.isSand(Math.round(p.x), Math.round(p.y))) mul *= SAND_SLOW;
+      const dist = speedOf(p) * dt * mul;
       const h = () => dx !== 0 && this.tryMove(p, dx, 0, dist, dy);
       const v = () => dy !== 0 && this.tryMove(p, 0, dy, dist, dx);
       let moved: boolean;
@@ -332,6 +520,7 @@ export class World {
   }
 
   pressBomb(p: Player) {
+    if (p.zombie > 0) return; // mordido não solta bombas
     const tx = Math.round(p.x);
     const ty = Math.round(p.y);
     const own = this.bombs.filter((b) => b.owner === p.slot);
@@ -366,8 +555,13 @@ export class World {
       followUp: p.followUp,
       discount: p.discount,
       coin: false,
+      silver: p.silver,
     });
     p.discount = false;
+    if (p.silver) {
+      p.silver = false;
+      consumeItem(p, 'bp');
+    }
     this.events.push('bomb');
   }
 
@@ -438,14 +632,14 @@ export class World {
     const i = this.bombs.indexOf(b);
     if (i < 0) return;
     this.bombs.splice(i, 1);
-    this.blast(b.x, b.y, b.range, b.owner, b.discount);
+    this.blast(b.x, b.y, b.range, b.owner, b.discount, b.silver);
     if (b.followUp) this.markers.push({ x: b.x, y: b.y, t: 1, total: 1, range: b.range, owner: b.owner, kind: 'followUp' });
   }
 
-  blast(x: number, y: number, range: number, owner: number, discount = false) {
+  blast(x: number, y: number, range: number, owner: number, discount = false, silver = false) {
     const res = computeBlast(this.grid, x, y, range, (tx, ty) => !!this.bombAt(tx, ty));
     const hit = new Set(res.tiles.map((t) => t.y * this.grid.w + t.x));
-    for (const t of res.tiles) this.addFlame(t.x, t.y, t.dir, owner, discount);
+    for (const t of res.tiles) this.addFlame(t.x, t.y, t.dir, owner, discount, silver);
     this.items = this.items.filter((it) => !(hit.has(it.y * this.grid.w + it.x) && it.age > 0.3));
     for (const bb of res.bombs) {
       const other = this.bombAt(bb.x, bb.y);
@@ -490,19 +684,20 @@ export class World {
     if (this.grid.hasDrop[i]) {
       this.grid.hasDrop[i] = 0;
       const role = owner >= 0 ? (this.playerBySlot(owner)?.role ?? null) : null;
-      this.items.push({ id: this.id(), itemId: rollDrop(role, this.rng), x, y, age: 0 });
+      this.items.push({ id: this.id(), itemId: rollDrop(role, this.rng, this.cfg.mode), x, y, age: 0 });
     }
     return true;
   }
 
-  private addFlame(x: number, y: number, dir: FlameDir, owner: number, discount: boolean) {
+  private addFlame(x: number, y: number, dir: FlameDir, owner: number, discount: boolean, silver = false) {
     const f = this.flames.find((q) => q.x === x && q.y === y);
     if (f) {
       f.t = FLAME_TIME;
       if (f.dir !== dir) f.dir = 'c';
       f.owner = owner;
       f.discount = f.discount || discount;
-    } else this.flames.push({ x, y, dir, t: FLAME_TIME, owner, discount });
+      f.silver = f.silver || silver;
+    } else this.flames.push({ x, y, dir, t: FLAME_TIME, owner, discount, silver });
   }
 
   private updateFlames(dt: number, damage: boolean) {
@@ -511,11 +706,23 @@ export class World {
     if (!damage) return;
     for (const f of this.flames) {
       for (const p of this.players) if (p.alive && Math.abs(p.x - f.x) < 0.55 && Math.abs(p.y - f.y) < 0.55) this.hurt(p, f.owner, f.discount);
-      for (const e of this.enemies) if (!e.dead && Math.abs(e.x - f.x) < 0.6 && Math.abs(e.y - f.y) < 0.6) this.killEnemy(e, f.owner);
+      for (const e of this.enemies) if (!e.dead && Math.abs(e.x - f.x) < 0.6 && Math.abs(e.y - f.y) < 0.6) this.damageEnemy(e, f.owner);
       const b = this.boss;
-      if (b && !b.dead && Math.abs(b.x - f.x) < 0.8 && Math.abs(b.y - f.y) < 0.8) this.hitBoss(f.owner);
+      if (b && !b.dead && Math.abs(b.x - f.x) < 0.8 && Math.abs(b.y - f.y) < 0.8) this.hitBoss(f.owner, f.silver ? 2 : 1);
     }
     this.enemies = this.enemies.filter((e) => !e.dead);
+  }
+
+  /** Uma explosão tira 1 de vida; inimigos com mais vida (zumbi de escritório) piscam e seguem. */
+  damageEnemy(e: Enemy, owner: number) {
+    if (e.dead || e.hitCd > 0) return;
+    e.hp--;
+    e.hitCd = 0.7;
+    if (e.hp > 0) {
+      this.fx({ kind: 'text', x: e.x, y: e.y, total: 0.7, color: '#fda4af', text: `${e.hp}` });
+      return;
+    }
+    this.killEnemy(e, owner);
   }
 
   private updateMarkers(dt: number) {
@@ -540,15 +747,18 @@ export class World {
     this.events.push('kill');
   }
 
-  hitBoss(owner: number) {
+  hitBoss(owner: number, dmg = 1) {
     const b = this.boss;
     if (!b || b.dead || b.hitCd > 0) return;
-    b.hp--;
+    b.hp = Math.max(0, b.hp - dmg);
     b.hitCd = 1.0;
+    b.pending = null;
+    b.dash = 0;
     const p = owner >= 0 ? this.playerBySlot(owner) : undefined;
-    if (p) p.score += 250;
+    if (p) p.score += 250 * dmg;
     this.events.push('bossHit');
-    this.fx({ kind: 'text', x: b.x, y: b.y - 0.8, total: 0.9, color: '#f43f5e', text: `-1` });
+    this.fx({ kind: 'text', x: b.x, y: b.y - 0.8, total: 0.9, color: dmg > 1 ? '#e2e8f0' : '#f43f5e', text: `-${dmg}` });
+    if (dmg > 1 && p && b.hp > 0) this.sayP(p, 'BALA DE PRATA!', `dano dobrado · ${b.hp}/${b.maxHp}`);
     if (b.hp <= 0) {
       b.dead = true;
       if (p) p.score += 2000;
@@ -598,6 +808,22 @@ export class World {
     for (const b of burning) {
       this.destroyBlock(b.x, b.y, -1, true);
       this.blast(b.x, b.y, 1, -1);
+    }
+    // noite 2 (Laboratório): raios energizam abóboras, que explodem sozinhas
+    if (this.cfg.night === 2) {
+      this.zapAcc += dt;
+      if (this.zapAcc >= 6) {
+        this.zapAcc = 0;
+        const boxes: { x: number; y: number }[] = [];
+        for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) if (g.get(x, y) === TILE.Box && g.timer[g.idx(x, y)] <= 0) boxes.push({ x, y });
+        if (boxes.length) {
+          const b = pick(this.rng, boxes);
+          g.timer[g.idx(b.x, b.y)] = 2.5;
+          g.version++;
+          this.say('SISTEMA', SYS_COLOR, 'RAIO!', 'uma abóbora vai explodir');
+          this.events.push('zap');
+        }
+      }
     }
     if (this.cfg.stageId === 5 && this.cfg.mode !== 'client') {
       this.fireAcc += dt;
@@ -677,11 +903,13 @@ export class World {
     }
     if (!alive.length) {
       this.outcome = 'gameover';
-      this.say('SISTEMA', SYS_COLOR, 'SPRINT FALHOU', 'todos caíram');
+      this.say('SISTEMA', SYS_COLOR, this.horde ? 'NOITE PERDIDA' : 'SPRINT FALHOU', 'todos caíram');
       this.events.push('end');
       return;
     }
-    if (this.enemies.length === 0 && (!this.boss || this.boss.dead)) {
+    // Modo Zumbi: a noite só acaba quando o chefão (que vem depois dos ajudantes) cai
+    const done = this.horde ? !!this.boss?.dead : this.enemies.length === 0 && (!this.boss || this.boss.dead);
+    if (done) {
       this.outcome = 'cleared';
       const bonus = Math.floor(this.time) * 5;
       for (const p of alive) p.score += bonus;

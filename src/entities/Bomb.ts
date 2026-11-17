@@ -14,6 +14,8 @@ export interface Bomb {
   followUp: boolean;
   discount: boolean;
   coin: boolean;
+  /** Bala de prata: a explosão tira 2 de resistência do chefão */
+  silver: boolean;
 }
 
 export interface Flame {
@@ -23,6 +25,7 @@ export interface Flame {
   t: number;
   owner: number;
   discount: boolean;
+  silver: boolean;
 }
 
 /** Aviso no chão: depois de `t` segundos vira explosão (ataques de chefão, follow-up, fogo). */

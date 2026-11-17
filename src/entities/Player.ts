@@ -23,6 +23,8 @@ export interface Player {
   followUp: boolean;
   discount: boolean;
   bugs: number;
+  holy: number; // Água benta: mordidas que ainda pode bloquear
+  silver: boolean; // Bala de prata: a próxima bomba dá dano dobrado no chefão
   // timers (s)
   invuln: number;
   coffee: number;
@@ -33,16 +35,18 @@ export interface Player {
   copilot: number;
   hallucinate: boolean;
   budgetCut: number;
-  touchCd: number; // imunidade curta a reuniões / merge conflicts
+  touchCd: number; // imunidade curta a reuniões / merge conflicts / mordidas
   specialCd: number;
   specialMax: number;
+  zombie: number; // mordido: lento e sem bombas até zerar ou um colega curar
+  candy: number; // Doce: velocidade +2
   anim: number;
 }
 
-/** Dados que atravessam arenas no Modo História / Desafio. */
+/** Dados que atravessam arenas no Modo História / Desafio / Modo Zumbi. */
 export type PlayerCarry = Pick<
   Player,
-  'slot' | 'lives' | 'score' | 'stats' | 'items' | 'shield' | 'kick' | 'remote' | 'go' | 'followUp' | 'bugs' | 'alive'
+  'slot' | 'lives' | 'score' | 'stats' | 'items' | 'shield' | 'kick' | 'remote' | 'go' | 'followUp' | 'bugs' | 'holy' | 'silver' | 'alive'
 >;
 
 export function createPlayer(slot: number, role: RoleId, variant: number, spawn: { x: number; y: number }, lives: number): Player {
@@ -68,6 +72,8 @@ export function createPlayer(slot: number, role: RoleId, variant: number, spawn:
     followUp: false,
     discount: false,
     bugs: 0,
+    holy: 0,
+    silver: false,
     invuln: 1.5,
     coffee: 0,
     invert: 0,
@@ -80,6 +86,8 @@ export function createPlayer(slot: number, role: RoleId, variant: number, spawn:
     touchCd: 0,
     specialCd: 0,
     specialMax: specialById(def.especialId).recarga,
+    zombie: 0,
+    candy: 0,
     anim: 0,
   };
 }
@@ -97,9 +105,14 @@ export function carryOf(p: Player): PlayerCarry {
     go: p.go,
     followUp: p.followUp,
     bugs: p.bugs,
+    holy: p.holy,
+    silver: p.silver,
     alive: p.alive,
   };
 }
 
-/** Velocidade em tiles/s a partir do atributo (1–8). */
-export const speedOf = (p: Player) => 2.2 + 0.45 * p.stats.speed;
+/** Bônus do Doce no atributo de velocidade. */
+export const CANDY_BONUS = 2;
+
+/** Velocidade em tiles/s a partir do atributo (1–8; o Doce passa do limite por 8 s). */
+export const speedOf = (p: Player) => 2.2 + 0.45 * (p.stats.speed + (p.candy > 0 ? CANDY_BONUS : 0));

@@ -69,6 +69,42 @@
         { "type": "cancelBonus", "name": "Bônus cancelado", "interval": 12 },
         { "type": "coinRain", "name": "Corte de custos", "tiles": 4, "delay": 1.6, "interval": 10 }
       ]
+    },
+
+    {
+      "id": "lobisomem", "name": "Lobisomem", "sprite": "pixel", "resistencia": 8, "speed": 1.5,
+      "attacks": [
+        { "type": "charge", "name": "Investida", "delay": 0.9, "interval": 7 },
+        { "type": "stunAll", "name": "Uivo", "duration": 1.5, "interval": 11 }
+      ]
+    },
+    {
+      "id": "criatura", "name": "A Criatura", "sprite": "pixel", "resistencia": 9, "speed": 1.0,
+      "attacks": [
+        { "type": "stomp", "name": "Pisão", "interval": 8 },
+        { "type": "lineBlast", "name": "Descarga", "interval": 7 }
+      ]
+    },
+    {
+      "id": "mumia", "name": "Múmia", "sprite": "pixel", "resistencia": 10, "speed": 1.0,
+      "attacks": [
+        { "type": "freezeNearest", "name": "Faixas", "duration": 2, "msg": "ficou preso nas faixas", "interval": 8 },
+        { "type": "sandstorm", "name": "Tempestade de areia", "duration": 5, "interval": 15 }
+      ]
+    },
+    {
+      "id": "bruxa", "name": "Bruxa", "sprite": "pixel", "resistencia": 11, "speed": 1.3,
+      "attacks": [
+        { "type": "wallUp", "name": "Caldeirão", "tiles": 3, "msg": "poções viraram 3 blocos em abóboras", "interval": 9 },
+        { "type": "hexBombs", "name": "Feitiço", "interval": 8 }
+      ]
+    },
+    {
+      "id": "vampiro", "name": "Vampiro", "sprite": "pixel", "resistencia": 14, "speed": 1.6, "final": true,
+      "attacks": [
+        { "type": "teleport", "name": "Revoada", "interval": 9 },
+        { "type": "drain", "name": "Mordida", "duration": 3, "interval": 10 }
+      ]
     }
   ],
   "clientOrder": ["executivo", "startup", "investidora", "dono"],

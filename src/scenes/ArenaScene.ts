@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { STAGES, roleById } from '../core/data';
+import { NIGHTS, STAGES, enemyById, roleById } from '../core/data';
 import { advance, worldConfig, type Session } from '../core/session';
 import { sfx } from '../core/sfx';
 import { themeKey } from '../gfx/textures';
@@ -43,6 +43,9 @@ export class ArenaScene extends Phaser.Scene {
   private gOver!: Phaser.GameObjects.Graphics;
   private gFlames!: Phaser.GameObjects.Graphics;
   private gFx!: Phaser.GameObjects.Graphics;
+  private gFog!: Phaser.GameObjects.Graphics;
+  private flashT = 0; // banner rápido no meio da arena (ex.: chefão do Modo Zumbi apareceu)
+  private zombie = false;
   private pItems!: Pool;
   private pBombs!: Pool;
   private pEnts!: Pool;
@@ -71,6 +74,8 @@ export class ArenaScene extends Phaser.Scene {
     this.startDelay = 2.4;
     this.paused = false;
     this.leaving = false;
+    this.flashT = 0;
+    this.zombie = data.session.mode === 'zombie';
   }
 
   create() {
@@ -87,6 +92,7 @@ export class ArenaScene extends Phaser.Scene {
     for (let y = 0; y < w.grid.h; y++)
       for (let x = 0; x < w.grid.w; x++) {
         this.add.image(BOARD_X + x * T, BOARD_Y + y * T, `floor_${this.tk}_${(x + y) % 2}`).setOrigin(0).setDepth(0);
+        if (w.grid.isSand(x, y)) this.add.image(BOARD_X + x * T, BOARD_Y + y * T, 'sand').setOrigin(0).setDepth(0.5);
         this.blocks.push(this.add.image(BOARD_X + x * T, BOARD_Y + y * T, `rack_${this.tk}`).setOrigin(0).setDepth(1));
       }
     this.gOver = this.add.graphics().setDepth(2);
@@ -95,6 +101,7 @@ export class ArenaScene extends Phaser.Scene {
     this.pBombs = new Pool(this, 4);
     this.gFlames = this.add.graphics().setDepth(5);
     this.pEnts = new Pool(this, 6);
+    this.gFog = this.add.graphics().setDepth(7.5);
     this.gFx = this.add.graphics().setDepth(9);
 
     for (const p of w.players) {
@@ -138,7 +145,10 @@ export class ArenaScene extends Phaser.Scene {
     const s = this.session;
     const w = this.world;
     if (s.mode === 'battle') this.setBanner('BATALHA LOCAL', `${STAGES[s.stage].name} · todos contra todos`, 'PRONTO?');
-    else if (s.mode === 'client') this.setBanner(`CHEFÃO ${s.client + 1}/4`, `${w.boss?.def.name} · ${w.boss?.def.arena}`, 'PRONTO?', '#f43f5e');
+    else if (s.mode === 'zombie') {
+      const n = NIGHTS[s.stage];
+      this.setBanner(`NOITE ${n.id} · ${n.name.toUpperCase()}`, n.mecanica, 'PRONTO?', '#f97316');
+    } else if (s.mode === 'client') this.setBanner(`CHEFÃO ${s.client + 1}/4`, `${w.boss?.def.name} · ${w.boss?.def.arena}`, 'PRONTO?', '#f43f5e');
     else {
       const st = STAGES[s.stage];
       if (s.arena === 3) this.setBanner(`CHEFÃO DA FASE ${st.id}`, w.boss?.def.name ?? '', 'PRONTO?', '#f43f5e');
@@ -189,8 +199,18 @@ export class ArenaScene extends Phaser.Scene {
       sfx(e);
       if (e === 'boom') this.shake = Math.max(this.shake, 0.12);
       if (e === 'bossHit') this.shake = 0.25;
+      if (e === 'stomp') this.shake = 0.45;
+      if (e === 'bossAppear' && this.world.boss) {
+        const b = this.world.boss.def;
+        this.setBanner(`${b.name.toUpperCase()} APARECEU`, 'todos os ajudantes caíram', 'o chefão da noite chegou', '#f43f5e');
+        this.flashT = 1.8;
+      }
     }
     this.world.events.length = 0;
+    if (this.flashT > 0) {
+      this.flashT -= dt;
+      if (this.flashT <= 0 && !this.world.outcome) this.banner.setVisible(false);
+    }
 
     if (this.shake > 0) {
       this.shake -= dt;
@@ -205,13 +225,17 @@ export class ArenaScene extends Phaser.Scene {
   private handleOutcome() {
     const w = this.world;
     if (!w.outcome) return;
-    if (!this.banner.visible) {
+    if (!this.banner.visible || this.flashT > 0) {
+      this.flashT = 0;
       const s = this.session;
-      if (w.outcome === 'cleared') {
+      if (w.outcome === 'cleared' && s.mode === 'zombie') {
+        const last = s.stage >= NIGHTS.length - 1;
+        this.setBanner('NOITE SOBREVIVIDA!', `${w.boss?.def.name ?? ''} derrotado`, last ? 'o sol está nascendo…' : 'próxima noite…', COLORS.green);
+      } else if (w.outcome === 'cleared') {
         const boss = w.boss;
         const last = (s.mode === 'story' && s.arena === 3) || s.mode === 'client';
         this.setBanner(boss ? 'CHEFÃO DERROTADO!' : 'ARENA LIMPA!', boss ? boss.def.name : 'todos os inimigos caíram', last ? '' : 'próxima arena…', COLORS.green);
-      } else if (w.outcome === 'gameover') this.setBanner('SPRINT FALHOU', 'o time inteiro caiu', '', COLORS.red);
+      } else if (w.outcome === 'gameover') this.setBanner(s.mode === 'zombie' ? 'NOITE PERDIDA' : 'SPRINT FALHOU', 'o time inteiro caiu', '', COLORS.red);
       else if (w.outcome === 'win') {
         const p = w.playerBySlot(w.winner)!;
         this.setBanner(`P${p.slot + 1} VENCEU!`, `${roleById(p.role).name} é o último de pé`, '', roleById(p.role).color);
@@ -243,6 +267,7 @@ export class ArenaScene extends Phaser.Scene {
         }
         im.setVisible(true).setAlpha(1);
         if (t === TILE.Wall) im.setTexture(x === 0 || y === 0 || x === g.w - 1 || y === g.h - 1 ? `border_${this.tk}` : `rack_${this.tk}`);
+        else if (t === TILE.Box && this.zombie) im.setTexture(g.timer[i] > 0 && blink ? (w.cfg.night === 2 ? 'pumpkin_zap' : 'pumpkin_burn') : 'pumpkin');
         else if (t === TILE.Box) im.setTexture(`box_${BOX_LABELS[g.label[i]]}${g.timer[i] > 0 && blink ? '_burn' : ''}`);
         else if (t === TILE.Postit) im.setTexture('postit').setAlpha(g.timer[i] < 1.5 && blink ? 0.5 : 1);
         else im.setTexture('deadline');
@@ -356,21 +381,28 @@ export class ArenaScene extends Phaser.Scene {
     this.pEnts.begin();
     const fx = this.gFx;
     fx.clear();
+    const dark = w.darkness();
     for (const e of w.enemies) {
-      const frame = Math.floor(e.anim * 4) % 2;
-      const im = this.pEnts.get(`enemy_${e.type}_${frame}`, cx(e.x), cy(e.y) - 4).setScale(3).setDepth(6 + e.y / 100);
+      const def = enemyById(e.type);
+      const frame = Math.floor(e.anim * (def.fly ? 6 : 4)) % 2;
+      const im = this.pEnts.get(`enemy_${e.type}_${frame}`, cx(e.x), cy(e.y) - 4).setScale(3).setDepth((def.fly ? 7 : 6) + e.y / 100);
       if (e.frozen > 0 || w.enemyFreeze > 0) im.setTint(0x93c5fd);
+      else if (e.hitCd > 0 && blink) im.setTint(0xff6b6b);
       if (e.stunned > 0) this.stars(fx, cx(e.x), cy(e.y) - 30, time);
       if (e.type === 'leak' && e.age > 7) im.setAlpha(blink ? 1 : 0.6);
+      // fantasmas só aparecem perto de luz
+      if (def.hidden) im.setAlpha(0.85 * (dark > 0 ? w.visibility(e.x, e.y) : 1));
     }
     const b = w.boss;
     if (b && !b.dead) {
-      const client = b.def.sprite === 'client';
-      const im = this.pEnts.get(`boss_${b.def.id}_${Math.floor(b.anim * 3) % 2}`, cx(b.x), cy(b.y) - (client ? 18 : 12))
-        .setScale(client ? 4.5 : 3)
+      const big = b.def.sprite === 'client' || b.def.sprite === 'pixel';
+      const im = this.pEnts.get(`boss_${b.def.id}_${Math.floor(b.anim * 3) % 2}`, cx(b.x), cy(b.y) - (big ? 18 : 12))
+        .setScale(b.def.sprite === 'client' ? 4.5 : big ? 4 : 3)
         .setDepth(6 + b.y / 100);
       if (b.hitCd > 0 && blink) im.setTint(0xff6b6b);
       if (b.frozen > 0 || w.enemyFreeze > 0) im.setTint(0x93c5fd);
+      if (b.dash > 0) im.setTint(blink ? 0xfda4af : 0xffffff);
+      if (b.pending) im.setAlpha(blink ? 1 : 0.5);
     }
     w.players.forEach((p, i) => {
       const tag = this.tags[i];
@@ -386,6 +418,7 @@ export class ArenaScene extends Phaser.Scene {
       im.setFlipX(p.facing.x < 0);
       if (p.invuln > 0 && p.coffee <= 0) im.setAlpha(blink ? 1 : 0.35);
       if (p.frozen > 0) im.setTint(0x93c5fd);
+      else if (p.zombie > 0) im.setTint(0x86efac);
       if (p.coffee > 0) {
         fx.lineStyle(3, 0xfbbf24, blink ? 1 : 0.5);
         fx.strokeCircle(px, py + 4, 30);
@@ -395,10 +428,24 @@ export class ArenaScene extends Phaser.Scene {
         fx.strokeCircle(px, py + 4, 27);
       }
       if (p.stunned > 0) this.stars(fx, px, py - 34, time);
-      const flags = p.invert > 0 ? ' ?!' : p.frozen > 0 ? ' ...' : '';
+      const flags = p.zombie > 0 ? ' ZUMBI' : p.invert > 0 ? ' ?!' : p.frozen > 0 ? ' ...' : '';
       tag.setVisible(true).setText(`P${p.slot + 1}${flags}`).setPosition(Math.round(px), Math.round(py - 30));
     });
     this.pEnts.end();
+
+    // escuridão (Castelo, noite 5) e tempestade de areia: névoa por tile, aberta em volta da luz
+    const fog = this.gFog;
+    fog.clear();
+    if (dark > 0) {
+      const color = w.sandT > 0 ? 0x8a6d3b : 0x04050a;
+      for (let y = 0; y < g.h; y++)
+        for (let x = 0; x < g.w; x++) {
+          const a = dark * (1 - w.visibility(x, y));
+          if (a <= 0.01) continue;
+          fog.fillStyle(color, a);
+          fog.fillRect(BOARD_X + x * T, BOARD_Y + y * T, T, T);
+        }
+    }
 
     // efeitos
     let fi = 0;

@@ -10,13 +10,14 @@ const MENU = [
   { label: 'MODO HISTÓRIA · 1–4 JOGADORES', go: (s: Phaser.Scene) => s.scene.start('CharacterSelect', { mode: 'story', stage: 0 }) },
   { label: 'BATALHA LOCAL', go: (s: Phaser.Scene) => s.scene.start('StageSelect', { purpose: 'battle' }) },
   { label: 'DESAFIO DO CLIENTE', go: (s: Phaser.Scene) => s.scene.start('CharacterSelect', { mode: 'client', stage: 0 }) },
+  { label: 'MODO ZUMBI · 5 NOITES', go: (s: Phaser.Scene) => s.scene.start('StageSelect', { purpose: 'zombie' }) },
   { label: 'SELEÇÃO DE FASES', go: (s: Phaser.Scene) => s.scene.start('StageSelect', { purpose: 'story' }) },
   { label: 'PERSONAGENS', go: (s: Phaser.Scene) => s.scene.start('Characters') },
   { label: 'OPÇÕES', go: (s: Phaser.Scene) => s.scene.start('Options') },
 ];
 
-const MENU_Y = 384;
-const MENU_STEP = 50;
+const MENU_Y = 376;
+const MENU_STEP = 44;
 
 export class TitleScene extends Phaser.Scene {
   private sel = 0;
@@ -53,7 +54,7 @@ export class TitleScene extends Phaser.Scene {
       text(this, x, y + 74, r.name, { size: 12, color: r.color, align: 'center' });
     });
 
-    this.press = text(this, 640, 696, 'PRESSIONE ENTER', { size: 16, align: 'center' });
+    this.press = text(this, 640, 704, 'PRESSIONE ENTER', { size: 16, align: 'center' });
     for (let i = 0; i < 25; i++) {
       const key = i % 2 === 0 ? 'rack_title' : `box_${['FIXME', 'TODO', 'HACK'][Math.floor(i / 2) % 3]}`;
       this.strip.push(this.add.image(i * 56, 772, key).setOrigin(0, 0.5));
@@ -64,13 +65,13 @@ export class TitleScene extends Phaser.Scene {
   private drawCursor() {
     const g = this.cursor;
     g.clear();
-    const y = MENU_Y + this.sel * MENU_STEP - 14;
+    const y = MENU_Y + this.sel * MENU_STEP - 12;
     g.fillStyle(hex('#1e2232'), 1);
-    g.fillRect(64, y, 780, 46);
+    g.fillRect(64, y, 780, 42);
     g.lineStyle(4, hex(COLORS.yellow), 1);
-    g.strokeRect(64, y, 780, 46);
+    g.strokeRect(64, y, 780, 42);
     g.fillStyle(hex(COLORS.yellow), 1);
-    g.fillTriangle(84, y + 13, 84, y + 33, 100, y + 23);
+    g.fillTriangle(84, y + 11, 84, y + 31, 100, y + 21);
     this.items.forEach((t, i) => t.setColor(i === this.sel ? COLORS.yellow : COLORS.text));
   }
 

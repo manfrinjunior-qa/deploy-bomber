@@ -1,5 +1,5 @@
-import { DROP_TABLES, ROLE_ORDER } from '../core/data';
-import type { DropTable, RoleId } from '../core/types';
+import { DROP_TABLES, NIGHT_DROPS, ROLE_ORDER } from '../core/data';
+import type { DropTable, GameMode, RoleId } from '../core/types';
 import { pick, type Rng } from '../core/rng';
 
 /** Sorteio ponderado numa tabela de drop. */
@@ -13,11 +13,16 @@ export function rollFromTable(table: DropTable, rng: Rng): string {
   return table[table.length - 1][0];
 }
 
+/** Tabela usada num modo: no Modo Zumbi, os itens da noite entram para todos os papéis. */
+export function dropTableFor(role: RoleId, mode?: GameMode): DropTable {
+  return mode === 'zombie' ? [...DROP_TABLES[role], ...NIGHT_DROPS] : DROP_TABLES[role];
+}
+
 /**
  * FR-005: o tipo do item é sorteado na hora da explosão, a partir da tabela
  * do papel do dono da bomba. Sem dono (fogo, ataques de chefão) → papel aleatório.
  */
-export function rollDrop(ownerRole: RoleId | null, rng: Rng): string {
+export function rollDrop(ownerRole: RoleId | null, rng: Rng, mode?: GameMode): string {
   const role = ownerRole ?? pick(rng, ROLE_ORDER);
-  return rollFromTable(DROP_TABLES[role], rng);
+  return rollFromTable(dropTableFor(role, mode), rng);
 }

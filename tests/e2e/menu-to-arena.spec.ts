@@ -66,12 +66,37 @@ test('seleção: esquerda/direita percorrem as 5 variantes e voltam ao Personali
   expect(errors).toEqual([]);
 });
 
+test('Modo Zumbi: menu → noites → seleção → noite 1 com ajudantes', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await expect.poll(() => activeScene(page), { timeout: 15_000 }).toBe('Title');
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowDown', { delay: 50 });
+  await page.keyboard.press('Enter');
+  await expect.poll(() => activeScene(page)).toBe('StageSelect');
+  expect(await page.evaluate(() => (window as unknown as G).__game.scene.getScene('StageSelect').purpose)).toBe('zombie');
+
+  await page.keyboard.press('Enter'); // Noite 1 (sempre liberada)
+  await expect.poll(() => activeScene(page)).toBe('CharacterSelect');
+  await page.keyboard.press('KeyQ'); // P1 pronto
+  await page.keyboard.press('Enter');
+  await expect.poll(() => activeScene(page)).toBe('Arena');
+
+  const state = await page.evaluate(() => {
+    const w = (window as unknown as G).__game.scene.getScene('Arena').world;
+    return { mode: w.cfg.mode, night: w.cfg.night, quota: w.horde.quota, helpers: w.helpersAlive(), boss: !!w.boss };
+  });
+  expect(state).toEqual({ mode: 'zombie', night: 1, quota: 5, helpers: 3, boss: false });
+  await page.waitForTimeout(3000);
+  expect(errors).toEqual([]);
+});
+
 test('título → Personagens: navega por papéis e variantes e volta', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
   await expect.poll(() => activeScene(page), { timeout: 15_000 }).toBe('Title');
-  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown', { delay: 50 }); // um toque por quadro
+  for (let i = 0; i < 5; i++) await page.keyboard.press('ArrowDown', { delay: 50 }); // um toque por quadro
   await page.keyboard.press('Enter');
   await expect.poll(() => activeScene(page)).toBe('Characters');
 

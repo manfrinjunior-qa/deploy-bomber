@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ROLE_ORDER, STAGES, roleById, specialById } from '../core/data';
+import { NIGHTS, ROLE_ORDER, STAGES, roleById, specialById } from '../core/data';
 import type { GameMode, PlayerSetup, RoleId } from '../core/types';
 import { sfx } from '../core/sfx';
 import type { Session } from '../core/session';
@@ -26,6 +26,7 @@ const MODE_LABEL: Record<GameMode, string> = {
   story: 'MODO HISTÓRIA',
   battle: 'BATALHA LOCAL',
   client: 'DESAFIO DO CLIENTE',
+  zombie: 'MODO ZUMBI',
 };
 
 export class CharacterSelectScene extends Phaser.Scene {
@@ -53,7 +54,12 @@ export class CharacterSelectScene extends Phaser.Scene {
 
   create() {
     text(this, 40, 28, 'ESCOLHA SEU PAPEL', { size: 30 });
-    const where = this.mode === 'client' ? 'as 4 versões do Cliente' : `Fase ${this.stage + 1} · ${STAGES[this.stage].name}`;
+    const where =
+      this.mode === 'client'
+        ? 'as 4 versões do Cliente'
+        : this.mode === 'zombie'
+          ? `Noite ${this.stage + 1} · ${NIGHTS[this.stage].name}`
+          : `Fase ${this.stage + 1} · ${STAGES[this.stage].name}`;
     text(this, 42, 76, `${MODE_LABEL[this.mode]} · ${where} · 1 teclado, até 4 jogadores`, { font: 'body', size: 20, color: COLORS.dim });
     this.status = text(this, 1240, 40, '', { size: 14, color: COLORS.yellow, align: 'right' });
     this.hint = text(this, 640, 772, '', { size: 9, color: COLORS.dim, align: 'center' });

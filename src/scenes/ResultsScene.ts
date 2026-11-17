@@ -22,7 +22,7 @@ export class ResultsScene extends Phaser.Scene {
 
   create() {
     const d = this.data_;
-    const good = d.title !== 'SPRINT FALHOU';
+    const good = d.good;
     const title = text(this, 640, 90, d.title, { size: 48, color: good ? COLORS.yellow : COLORS.red, align: 'center' });
     title.setShadow(5, 5, good ? '#c2410c' : '#450a0a', 0, false, true);
     text(this, 640, 170, d.subtitle, { font: 'body', size: 24, color: COLORS.dim, align: 'center' });
@@ -41,12 +41,13 @@ export class ResultsScene extends Phaser.Scene {
       this.add.image(x + w / 2, 350, `char_${p.role}_${p.variant}_0`).setScale(6).setAlpha(p.alive || d.mode !== 'battle' ? 1 : 0.4);
       text(this, x + w / 2, 440, `P${p.slot + 1} ${r.name}`, { size: 14, color: r.color, align: 'center' });
       text(this, x + w / 2, 474, fmt(p.score), { size: 22, align: 'center' });
-      text(this, x + w / 2, 512, i === 0 ? 'MVP DA SPRINT' : `${i + 1}º lugar`, { size: 9, color: i === 0 ? COLORS.yellow : COLORS.dim, align: 'center' });
+      text(this, x + w / 2, 512, i === 0 ? (d.mode === 'zombie' ? 'MVP DA NOITE' : 'MVP DA SPRINT') : `${i + 1}º lugar`, { size: 9, color: i === 0 ? COLORS.yellow : COLORS.dim, align: 'center' });
       if (win) text(this, x + w / 2, 540, 'VENCEDOR', { size: 10, color: COLORS.green, align: 'center' });
     });
 
     text(this, 640, 620, `RECORDE: ${fmt(save.data.hiScore)}`, { size: 14, color: COLORS.dim, align: 'center' });
     if (d.mode === 'story') text(this, 640, 652, `fases liberadas: ${save.data.unlocked}/5`, { font: 'body', size: 18, color: COLORS.dim, align: 'center' });
+    if (d.mode === 'zombie') text(this, 640, 652, `noites liberadas: ${save.data.zombieUnlocked}/5`, { font: 'body', size: 18, color: COLORS.dim, align: 'center' });
     text(this, 640, 720, 'ENTER volta ao menu', { size: 12, align: 'center' });
     sfx('end');
   }

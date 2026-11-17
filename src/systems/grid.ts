@@ -41,6 +41,8 @@ export class Grid {
   readonly label: Uint8Array;
   readonly hasDrop: Uint8Array;
   readonly timer: Float32Array; // post-it (vida) ou caixa em chamas (contagem)
+  /** piso de areia (Modo Zumbi, Museu): deixa lento quem passa */
+  readonly sand: Uint8Array;
   readonly spawns: { x: number; y: number }[] = [];
   version = 0; // incrementa a cada mudança — o renderer só redesenha quando muda
 
@@ -50,6 +52,7 @@ export class Grid {
     this.label = new Uint8Array(n);
     this.hasDrop = new Uint8Array(n);
     this.timer = new Float32Array(n);
+    this.sand = new Uint8Array(n);
   }
 
   static fromMap(map: string[], rng: Rng): Grid {
@@ -66,7 +69,8 @@ export class Grid {
           g.tiles[i] = TILE.Box;
           g.label[i] = randomBoxLabel(rng);
           g.hasDrop[i] = rng() < DROP_CHANCE ? 1 : 0;
-        } else if (c >= '1' && c <= '4') spawns[c] = { x, y };
+        } else if (c === 's') g.sand[i] = 1;
+        else if (c >= '1' && c <= '4') spawns[c] = { x, y };
       }
     }
     for (const k of ['1', '2', '3', '4']) g.spawns.push(spawns[k] ?? { x: 1, y: 1 });
@@ -89,6 +93,9 @@ export class Grid {
   }
   isFloor(x: number, y: number) {
     return this.get(x, y) === TILE.Floor;
+  }
+  isSand(x: number, y: number) {
+    return this.inside(x, y) && this.sand[y * this.w + x] === 1;
   }
   idx(x: number, y: number) {
     return y * this.w + x;

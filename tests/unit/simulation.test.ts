@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STAGES } from '../../src/core/data';
+import { NIGHTS, STAGES } from '../../src/core/data';
 import { makeRng } from '../../src/core/rng';
 import { worldConfig, type Session } from '../../src/core/session';
 import type { PlayerInput, PlayerSetup } from '../../src/core/types';
@@ -60,4 +60,32 @@ describe('simulação com entradas aleatórias', () => {
       fuzz({ mode: 'client', players: PLAYERS, stage: 0, arena: 0, client: c }, 900 + c);
     });
   }
+  NIGHTS.forEach((n, i) => {
+    it(`modo zumbi: noite ${n.id} (${n.name})`, () => {
+      const w = fuzz({ mode: 'zombie', players: PLAYERS, stage: i, arena: 0, client: 0 }, 1300 + i);
+      expect(w.horde!.spawned).toBeLessThanOrEqual(n.ajudantes);
+    });
+    it(`modo zumbi: noite ${n.id} com o chefão em campo`, () => {
+      // derruba os ajudantes até o chefão aparecer e deixa os ataques dele rodarem com entradas aleatórias
+      const w = new World({ ...worldConfig({ mode: 'zombie', players: PLAYERS, stage: i, arena: 0, client: 0 }), seed: 1400 + i });
+      for (let f = 0; f < 60 * 90 && !w.boss; f++) {
+        for (const e of w.enemies) if (e.helper) w.killEnemy(e, 0);
+        for (const p of w.players) p.invuln = 5;
+        w.update(1 / 60, []);
+      }
+      expect(w.boss?.def.id).toBe(n.chefao);
+      const rng = makeRng(77 + i);
+      for (let f = 0; f < 60 * 60 && !w.outcome; f++) {
+        const inputs = PLAYERS.map(() => ({ dx: Math.round(rng() * 2 - 1), dy: 0, bomb: rng() < 0.03, special: rng() < 0.01 }));
+        w.update(1 / 60, inputs);
+        for (const p of w.players) if (p.alive) expect(w.grid.get(Math.round(p.x), Math.round(p.y))).not.toBe(TILE.Wall);
+        const b = w.boss!;
+        if (!b.dead) {
+          expect(w.grid.inside(Math.round(b.x), Math.round(b.y))).toBe(true);
+          expect(b.hp).toBeLessThanOrEqual(b.maxHp);
+        }
+        expect(w.enemies.length).toBeLessThanOrEqual(16);
+      }
+    });
+  });
 });

@@ -144,6 +144,18 @@ export function drawBoss(sprite: string, frame = 0): Pix {
   return p.outline(INK);
 }
 
+// ───────────────────────────── sprites em texto (Modo Zumbi)
+/**
+ * Desenha um sprite de `zumbi-sprites.json` (16 colunas; '.' transparente) com contorno de 1 px.
+ * O quadro 1 sobe 1 px (balanço da animação); o morcego bate as asas trocando a linha das pontas.
+ */
+export function drawRowSprite(rows: string[], palette: Record<string, string>, frame = 0): Pix {
+  const p = new Pix(18, rows.length + 3, 1, 1);
+  const bob = frame ? 0 : 1;
+  rows.forEach((row, y) => [...row].forEach((ch, x) => ch !== '.' && palette[ch] && p.px(x, y + bob, palette[ch])));
+  return p.outline(INK);
+}
+
 // ───────────────────────────── bomba
 export function drawBomb(color: string, frame: number, coin = false): Pix {
   const p = new Pix(18, 18, 1, 1);
@@ -228,6 +240,87 @@ export function tileBox(label: string, burning = false, textColor = '#ffffff'): 
     ctx.fillStyle = '#fde047';
     ctx.fillRect(8, 2, 4, 4); ctx.fillRect(25, 0, 4, 4); ctx.fillRect(44, 4, 4, 4);
   }
+  return cv;
+}
+
+// ───────────────────────────── Modo Zumbi: lápide (bloco fixo), abóbora (destrutível), areia
+export function tileTomb(stone: string, light: string): HTMLCanvasElement {
+  const [cv, ctx] = canvas(TILE_PX, TILE_PX);
+  const dark = shade(stone, -0.35);
+  // base
+  ctx.fillStyle = shade(stone, -0.5);
+  ctx.fillRect(6, 46, 44, 6);
+  ctx.fillStyle = dark;
+  ctx.fillRect(8, 44, 40, 4);
+  // pedra com topo arredondado
+  ctx.fillStyle = dark;
+  ctx.fillRect(10, 12, 36, 34);
+  ctx.fillRect(14, 8, 28, 4);
+  ctx.fillRect(18, 6, 20, 2);
+  ctx.fillStyle = stone;
+  ctx.fillRect(12, 12, 32, 32);
+  ctx.fillRect(16, 9, 24, 3);
+  ctx.fillStyle = light;
+  ctx.fillRect(12, 12, 4, 30);
+  ctx.fillRect(16, 9, 22, 3);
+  // cruz gravada
+  ctx.fillStyle = shade(stone, -0.45);
+  ctx.fillRect(25, 16, 6, 22);
+  ctx.fillRect(18, 22, 20, 6);
+  return cv;
+}
+
+export function tilePumpkin(mode: '' | 'burn' | 'zap' = ''): HTMLCanvasElement {
+  const [cv, ctx] = canvas(TILE_PX, TILE_PX);
+  const body = mode === 'zap' ? '#fb923c' : '#ea580c';
+  const lit = mode === 'zap' ? '#fef9c3' : '#fbbf24';
+  // talo
+  ctx.fillStyle = '#3f6212';
+  ctx.fillRect(25, 6, 6, 8);
+  ctx.fillStyle = '#65a30d';
+  ctx.fillRect(25, 6, 3, 6);
+  // corpo
+  ctx.fillStyle = '#7c2d12';
+  ctx.fillRect(8, 14, 40, 34);
+  ctx.fillRect(12, 12, 32, 38);
+  ctx.fillStyle = body;
+  ctx.fillRect(10, 16, 36, 30);
+  ctx.fillRect(14, 14, 28, 34);
+  ctx.fillStyle = '#c2410c';
+  ctx.fillRect(18, 14, 3, 34);
+  ctx.fillRect(35, 14, 3, 34);
+  ctx.fillStyle = '#fb923c';
+  ctx.fillRect(12, 18, 4, 10);
+  // rosto aceso
+  ctx.fillStyle = lit;
+  ctx.fillRect(17, 24, 7, 6);
+  ctx.fillRect(32, 24, 7, 6);
+  ctx.fillRect(17, 36, 22, 4);
+  ctx.fillStyle = body;
+  ctx.fillRect(22, 36, 3, 2);
+  ctx.fillRect(31, 36, 3, 2);
+  if (mode === 'burn') {
+    ctx.fillStyle = '#f97316';
+    ctx.fillRect(6, 0, 8, 8); ctx.fillRect(40, 2, 8, 8);
+    ctx.fillStyle = '#fde047';
+    ctx.fillRect(8, 2, 4, 4); ctx.fillRect(42, 4, 4, 4);
+  } else if (mode === 'zap') {
+    ctx.fillStyle = '#7dd3fc';
+    ctx.fillRect(4, 8, 4, 10); ctx.fillRect(8, 16, 4, 4); ctx.fillRect(46, 30, 4, 12); ctx.fillRect(42, 40, 4, 4);
+    ctx.fillStyle = '#e0f2fe';
+    ctx.fillRect(5, 9, 2, 6); ctx.fillRect(47, 31, 2, 8);
+  }
+  return cv;
+}
+
+export function tileSand(): HTMLCanvasElement {
+  const [cv, ctx] = canvas(TILE_PX, TILE_PX);
+  ctx.fillStyle = 'rgba(214, 178, 110, 0.55)';
+  ctx.fillRect(0, 0, TILE_PX, TILE_PX);
+  ctx.fillStyle = 'rgba(160, 120, 60, 0.6)';
+  for (const [x, y] of [[8, 10], [30, 6], [44, 20], [14, 34], [36, 40], [22, 22], [6, 48], [46, 46]]) ctx.fillRect(x, y, 4, 2);
+  ctx.fillStyle = 'rgba(250, 230, 180, 0.5)';
+  for (const [x, y] of [[18, 12], [40, 30], [10, 26], [28, 48]]) ctx.fillRect(x, y, 2, 2);
   return cv;
 }
 

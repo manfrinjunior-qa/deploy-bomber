@@ -9,9 +9,28 @@ import type { RoleId } from '../../src/core/types';
 const ROLES: RoleId[] = ['DEV', 'QA', 'PO', 'COM'];
 
 describe('tabelas de drop', () => {
-  it('há 24 itens exclusivos (6 por papel) e 4 neutros', () => {
+  it('há 24 itens exclusivos (6 por papel), 4 neutros e 4 itens da noite (Modo Zumbi)', () => {
     for (const r of ROLES) expect(ITEMS.filter((i) => i.role === r).length).toBe(6);
-    expect(ITEMS.filter((i) => i.role === 'NEUTRAL').map((i) => i.name)).toEqual(['Café', 'Code Review', 'Bug Crítico', 'Copiloto IA']);
+    expect(ITEMS.filter((i) => i.role === 'NEUTRAL' && !i.mode).map((i) => i.name)).toEqual(['Café', 'Code Review', 'Bug Crítico', 'Copiloto IA']);
+    expect(ITEMS.filter((i) => i.mode === 'zombie').map((i) => i.name)).toEqual(['Doce', 'Lanterna', 'Água benta', 'Bala de prata']);
+  });
+
+  it('itens da noite não caem fora do Modo Zumbi', () => {
+    const rng = makeRng(3);
+    for (const role of ROLES) for (let i = 0; i < 2000; i++) expect(itemById(rollDrop(role, rng)).mode).toBeUndefined();
+  });
+
+  it('no Modo Zumbi os itens da noite caem para todos os papéis', () => {
+    const rng = makeRng(5);
+    for (const role of ROLES) {
+      const seen = new Set<string>();
+      for (let i = 0; i < 3000; i++) {
+        const it = itemById(rollDrop(role, rng, 'zombie'));
+        expect([role, 'NEUTRAL']).toContain(it.role);
+        if (it.mode === 'zombie') seen.add(it.id);
+      }
+      expect([...seen].sort()).toEqual(['ab', 'bp', 'dc', 'lt']);
+    }
   });
 
   it('pesos: atributo 60%, especiais 30%, neutros 10%', () => {

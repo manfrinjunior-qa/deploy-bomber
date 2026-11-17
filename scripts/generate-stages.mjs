@@ -1,4 +1,5 @@
-// Gera os arquivos src/data/stages/*.json (5 fases × 3 arenas + arena do chefão).
+// Gera os arquivos src/data/stages/*.json (5 fases × 3 arenas + arena do chefão)
+// e src/data/modo-zumbi.json (5 noites do Modo Zumbi).
 // Os mapas ficam versionados em JSON; rode `npm run gen:stages` só para recriá-los.
 // Legenda: '#' rack fixo · 'x' caixa (TODO/FIXME/HACK) · '.' piso · '1'-'4' spawn dos jogadores
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -85,4 +86,48 @@ for (const s of stages) {
 // Arenas do Desafio do Cliente
 const clientArenas = ['executivo', 'startup', 'investidora', 'dono'].map((id, i) => ({ boss: id, mapa: makeMap(5000 + i * 31, 0.3, { clearCenter: true }) }));
 writeFileSync(join(out, 'client-arenas.json'), JSON.stringify({ arenas: clientArenas }, null, 2) + '\n');
+
+// Modo Zumbi: 5 noites, uma arena cada. Legenda extra: 's' areia (piso que deixa todos lentos).
+// Lápides ('#') são os blocos fixos e abóboras ('x') os destrutíveis.
+const nights = [
+  {
+    id: 1, name: 'Floresta da Lua Cheia', color: '#A47551', chefao: 'lobisomem', ajudantes: 5,
+    theme: { floorA: '#1c2a1c', floorB: '#192619', border: '#4a5548', rack: '#8b93a3', rackLight: '#b6bdcb' },
+    desc: 'Uma clareira no meio da mata. Quando a lua cheia aparece, os zumbis aceleram.',
+    inimigos: ['runner', 'zombie'], mecanica: 'A cada 30 s a lua cheia deixa os zumbis 50% mais rápidos',
+  },
+  {
+    id: 2, name: 'Laboratório do Doutor', color: '#8FA3A8', chefao: 'criatura', ajudantes: 6,
+    theme: { floorA: '#1a2328', floorB: '#172025', border: '#3d4f58', rack: '#7d8a96', rackLight: '#a7b4bf' },
+    desc: 'Bobinas, tubos e uma tempestade lá fora. Os raios energizam as abóboras.',
+    inimigos: ['zombie', 'runner', 'office'], mecanica: 'Raios energizam blocos, que explodem sozinhos',
+  },
+  {
+    id: 3, name: 'Museu à Meia-noite', color: '#E8DCC0', chefao: 'mumia', ajudantes: 7,
+    theme: { floorA: '#2b2418', floorB: '#272015', border: '#5a4c36', rack: '#9a8f7c', rackLight: '#c4b9a3' },
+    desc: 'A ala egípcia ficou aberta. Sarcófagos soltam zumbis e a areia atrapalha o passo.',
+    inimigos: ['zombie', 'office'], mecanica: 'Sarcófagos soltam zumbis; areia deixa todos lentos', sand: 0.22,
+  },
+  {
+    id: 4, name: 'Cemitério da Firma', color: '#A855F7', chefao: 'bruxa', ajudantes: 8,
+    theme: { floorA: '#1d2a1a', floorB: '#1a2617', border: '#465243', rack: '#9aa3b2', rackLight: '#c3cad6' },
+    desc: 'Onde descansam os projetos cancelados. Túmulos se abrem e morcegos cortam o céu.',
+    inimigos: ['zombie', 'bat'], mecanica: 'Túmulos geram zumbis; morcegos voam por cima dos blocos',
+  },
+  {
+    id: 5, name: 'Castelo Sombrio', color: '#DC2626', chefao: 'vampiro', ajudantes: 10,
+    theme: { floorA: '#221a2b', floorB: '#1e1726', border: '#4a3a60', rack: '#7b7590', rackLight: '#a59fba' },
+    desc: 'As velas apagaram. Fantasmas atravessam paredes e só aparecem perto da luz.',
+    inimigos: ['zombie', 'ghost', 'poltergeist', 'bat'], mecanica: 'As velas apagam; fantasmas atravessam blocos e só aparecem perto de luz',
+  },
+];
+const zumbi = nights.map(({ sand, ...n }) => {
+  let mapa = makeMap(7000 + n.id * 53, 0.4 + n.id * 0.02, { clearCenter: true });
+  if (sand) {
+    const r = rng(9000 + n.id);
+    mapa = mapa.map((row, y) => [...row].map((c, x) => (c === '.' && !isSafe(x, y) && r() < sand ? 's' : c)).join(''));
+  }
+  return { ...n, mapa };
+});
+writeFileSync(join(out, '..', 'modo-zumbi.json'), JSON.stringify({ nights: zumbi }, null, 2) + '\n');
 console.log('stages gerados em', out);

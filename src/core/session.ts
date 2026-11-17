@@ -1,15 +1,15 @@
-import { CLIENT_ARENAS, CLIENT_ORDER, CLIENT_THEMES, STAGES, bossById } from './data';
+import { CLIENT_ARENAS, CLIENT_ORDER, CLIENT_THEMES, NIGHTS, NIGHT_TIME, STAGES, bossById } from './data';
 import type { GameMode, PlayerSetup } from './types';
 import type { PlayerCarry } from '../entities/Player';
 import type { World, WorldConfig } from '../systems/world';
 import { carryOf } from '../entities/Player';
 import { save } from './save';
 
-/** Estado de uma partida que atravessa arenas (Modo História / Desafio do Cliente). */
+/** Estado de uma partida que atravessa arenas (Modo História / Desafio do Cliente / Modo Zumbi). */
 export interface Session {
   mode: GameMode;
   players: PlayerSetup[];
-  stage: number; // índice 0..4
+  stage: number; // índice 0..4 (no Modo Zumbi, a noite)
   arena: number; // 0..2 arenas, 3 = chefão
   client: number; // 0..3 (Desafio do Cliente)
   carry?: PlayerCarry[];
@@ -19,6 +19,8 @@ export interface ResultsData {
   mode: GameMode;
   title: string;
   subtitle: string;
+  /** vitória (título em amarelo) ou derrota (vermelho) */
+  good: boolean;
   players: { slot: number; role: string; variant: number; score: number; alive: boolean }[];
   winner: number;
 }
@@ -26,6 +28,26 @@ export interface ResultsData {
 export const LIVES = 3;
 
 export function worldConfig(s: Session): WorldConfig {
+  if (s.mode === 'zombie') {
+    const n = NIGHTS[s.stage];
+    return {
+      mode: 'zombie',
+      map: n.mapa,
+      theme: n.theme,
+      stageId: 0,
+      stageName: n.name,
+      arenaLabel: `${n.name} · Noite ${n.id}/5`,
+      enemyTypes: n.inimigos,
+      enemyCount: 0,
+      bossId: n.chefao,
+      players: s.players,
+      carry: s.carry,
+      lives: LIVES,
+      time: NIGHT_TIME,
+      night: n.id,
+      helpers: n.ajudantes,
+    };
+  }
   if (s.mode === 'client') {
     const a = CLIENT_ARENAS[s.client];
     const boss = bossById(CLIENT_ORDER[s.client]);
@@ -91,6 +113,7 @@ export function advance(s: Session, w: World): { next: Session } | { results: Re
         mode: 'battle',
         title: winner >= 0 ? `P${winner + 1} VENCEU` : 'EMPATE',
         subtitle: winner >= 0 ? 'último de pé no deploy' : 'todos caíram no mesmo frame',
+        good: true,
         players,
         winner,
       },
@@ -99,14 +122,14 @@ export function advance(s: Session, w: World): { next: Session } | { results: Re
 
   const carry = w.players.map(carryOf);
   if (w.outcome === 'gameover') {
+    const where =
+      s.mode === 'client'
+        ? `o cliente ${bossById(CLIENT_ORDER[s.client]).name} venceu`
+        : s.mode === 'zombie'
+          ? `Noite ${s.stage + 1} · ${NIGHTS[s.stage].name}`
+          : `${STAGES[s.stage].name} · ${s.arena === 3 ? 'chefão' : `arena ${s.arena + 1}`}`;
     return {
-      results: {
-        mode: s.mode,
-        title: 'SPRINT FALHOU',
-        subtitle: s.mode === 'client' ? `o cliente ${bossById(CLIENT_ORDER[s.client]).name} venceu` : `${STAGES[s.stage].name} · ${s.arena === 3 ? 'chefão' : `arena ${s.arena + 1}`}`,
-        players,
-        winner: -1,
-      },
+      results: { mode: s.mode, title: s.mode === 'zombie' ? 'NOITE PERDIDA' : 'SPRINT FALHOU', subtitle: where, good: false, players, winner: -1 },
     };
   }
 
@@ -114,9 +137,19 @@ export function advance(s: Session, w: World): { next: Session } | { results: Re
     if (s.client >= 3) {
       save.data.clientCleared = true;
       save.write();
-      return { results: { mode: 'client', title: 'CLIENTE SATISFEITO', subtitle: 'as 4 versões do Cliente foram atendidas', players, winner: -1 } };
+      return { results: { mode: 'client', title: 'CLIENTE SATISFEITO', subtitle: 'as 4 versões do Cliente foram atendidas', good: true, players, winner: -1 } };
     }
     return { next: { ...s, client: s.client + 1, carry } };
+  }
+
+  if (s.mode === 'zombie') {
+    save.unlockNight(s.stage + 2);
+    if (s.stage >= NIGHTS.length - 1) {
+      save.data.zombieCleared = true;
+      save.write();
+      return { results: { mode: 'zombie', title: 'AMANHECEU!', subtitle: 'o time sobreviveu às 5 noites', good: true, players, winner: -1 } };
+    }
+    return { next: { ...s, stage: s.stage + 1, carry } };
   }
 
   // história
@@ -125,6 +158,6 @@ export function advance(s: Session, w: World): { next: Session } | { results: Re
   save.data.bestStage = Math.max(save.data.bestStage, s.stage + 1);
   save.write();
   if (s.stage >= STAGES.length - 1)
-    return { results: { mode: 'story', title: 'DEPLOY ENTREGUE', subtitle: 'sobreviveram à sexta-feira!', players, winner: -1 } };
+    return { results: { mode: 'story', title: 'DEPLOY ENTREGUE', subtitle: 'sobreviveram à sexta-feira!', good: true, players, winner: -1 } };
   return { next: { ...s, stage: s.stage + 1, arena: 0, carry } };
 }

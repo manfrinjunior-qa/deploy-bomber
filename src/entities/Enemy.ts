@@ -19,6 +19,15 @@ export interface Enemy extends Mover {
   age: number;
   dead: boolean;
   anim: number;
+  /** recarga entre golpes: uma explosão só tira 1 de vida (zumbi de escritório tem 2) */
+  hitCd: number;
+  /** ajudante da noite (conta para a cota do Modo Zumbi) */
+  helper: boolean;
+  /** rasante do morcego (s restantes) */
+  dash: number;
+  /** recarga do poltergeist (chutar bomba / arrastar bloco) */
+  kickCd: number;
+  dragCd: number;
 }
 
 export interface Boss extends Mover {
@@ -32,4 +41,8 @@ export interface Boss extends Mover {
   anim: number;
   lastAttack: string;
   lastAttackT: number;
+  /** Investida: o chefão chega a (x, y) quando o aviso explode */
+  pending: { x: number; y: number; t: number } | null;
+  /** Mordida do Vampiro: persegue rápido e rouba 1 vida no contato */
+  dash: number;
 }
