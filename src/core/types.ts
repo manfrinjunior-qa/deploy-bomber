@@ -2,12 +2,14 @@ export type RoleId = 'DEV' | 'QA' | 'PO' | 'COM';
 export type StatId = 'speed' | 'range' | 'bombs';
 export type Dir = { x: number; y: number };
 
-/** Cabelo ou cobertura da cabeça (ninja, robô e capacete substituem a cabeça inteira). */
+/** Cabelo ou cobertura da cabeça (robô e capacete substituem a cabeça inteira). */
 export type HeadStyle =
-  | 'quiff' | 'combed' | 'shaved' | 'bald' | 'long' | 'bun' | 'afro'
-  | 'hood' | 'beanie' | 'cap' | 'cowboy' | 'ninja' | 'robot' | 'helmet';
-export type Eyewear = 'clear' | 'thick' | 'shades' | 'round-shades';
+  | 'quiff' | 'pompadour' | 'side' | 'short' | 'crop' | 'plain' | 'fringe' | 'shaved' | 'bald'
+  | 'long' | 'bun' | 'cowboy' | 'ninja' | 'robot' | 'helmet';
+export type Eyewear = 'clear' | 'dark' | 'thick' | 'shades' | 'round-shades';
 export type FacialHair = 'full' | 'short' | 'goatee';
+/** 'thick' = grossas, coladas nos olhos; 'raised' = curtas, acima dos olhos */
+export type Brows = 'thick' | 'raised';
 export type Outfit = 'shirt' | 'polo' | 'tee' | 'suit' | 'dress' | 'jacket' | 'vest' | 'spacesuit' | 'robot';
 export type PropKind = 'magnifier' | 'card' | 'phone' | 'guitar' | 'briefcase' | 'lasso';
 
@@ -15,30 +17,41 @@ export type PropKind = 'magnifier' | 'card' | 'phone' | 'guitar' | 'briefcase' |
 export interface PropDef {
   kind: PropKind;
   color: string;
+  /** cor da armação/borda, quando difere da padrão */
+  trim?: string;
 }
 
-/** Aparência de um personagem 16×16 (jogadores e chefões do Cliente). */
+/**
+ * Aparência de um personagem (jogadores e chefões do Cliente).
+ * As cores de sombra são calculadas; os campos opcionais `shade`, `sole` etc. só existem
+ * para os casos em que a arte de referência usa um tom escolhido à mão.
+ */
 export interface CharacterLook {
   style: HeadStyle;
   skin: string;
-  hair: string;
+  hair: string; // cabelo; no ninja é o capuz, no robô o metal escuro
   shirt: string;
-  accent: string;
   pants: string;
   shoes: string;
   outfit?: Outfit; // padrão: 'shirt'
-  outer?: string; // colete / jaqueta
-  hat?: string; // cor de gorro, boné, chapéu ou faixa do ninja
+  accent?: string; // gola, camisa sob o terno, faixa do vestido
+  outer?: string; // colete
+  hat?: string; // chapéu, faixa do ninja, antena do robô
+  logo?: string; // estampa da camiseta
+  tie?: string;
+  bandana?: string;
+  shade?: string; // sombra da roupa
+  sole?: string; // sola do sapato
+  pantsShade?: string;
+  hairLight?: string; // brilho do cabelo
   eyewear?: Eyewear;
-  brows?: boolean; // sobrancelhas grossas
+  brows?: Brows;
   smile?: boolean; // sorriso aberto com dentes
+  blush?: boolean; // bochechas rosadas (padrão: sim)
   mouth?: string;
   beard?: FacialHair;
   beardColor?: string; // padrão: cor do cabelo
   headset?: boolean;
-  tie?: string;
-  bandana?: string;
-  logo?: string; // estampa no peito
   /** undefined = usa o objeto do papel; null = mãos vazias */
   prop?: PropDef | null;
 }

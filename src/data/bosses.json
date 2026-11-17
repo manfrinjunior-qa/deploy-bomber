@@ -38,7 +38,7 @@
     },
 
     {
-      "id": "executivo", "name": "Executivo", "sprite": "client", "variant": { "style": "combed", "skin": "#f5cba7", "hair": "#9ca3af", "shirt": "#1e3a8a", "accent": "#f8fafc", "pants": "#0f172a", "shoes": "#0b0d14", "tie": "#dc2626", "prop": { "kind": "briefcase", "color": "#b45309" } },
+      "id": "executivo", "name": "Executivo", "sprite": "client", "variant": { "style": "side", "skin": "#f6cba4", "hair": "#9ca3af", "outfit": "suit", "shirt": "#1e3a8a", "accent": "#f8fafc", "tie": "#dc2626", "pants": "#1e3a8a", "shoes": "#111827", "prop": { "kind": "briefcase", "color": "#92400e" } },
       "arena": "Sala de Reunião", "theme": "meeting", "resistencia": 6, "speed": 1.2,
       "attacks": [
         { "type": "shuffleBoxes", "name": "Mudança de escopo", "interval": 20 },
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "id": "startup", "name": "Startup", "sprite": "client", "variant": { "style": "beanie", "skin": "#8d5a3b", "hair": "#141414", "hat": "#141414", "shirt": "#475569", "accent": "#f8fafc", "pants": "#1e293b", "shoes": "#0b0d14", "tie": "#ef4444", "eyewear": "thick", "beard": "full", "prop": { "kind": "briefcase", "color": "#b45309" } },
+      "id": "startup", "name": "Startup", "sprite": "client", "variant": { "style": "crop", "skin": "#8d5a3b", "hair": "#111111", "outfit": "suit", "shirt": "#475569", "accent": "#f8fafc", "tie": "#ef4444", "pants": "#334155", "shoes": "#111827", "eyewear": "clear", "prop": { "kind": "briefcase", "color": "#b45309" } },
       "arena": "Coworking", "theme": "coworking", "resistencia": 7, "speed": 1.5,
       "attacks": [
         { "type": "invertAll", "name": "Pivot!", "duration": 5, "interval": 14 },
@@ -54,7 +54,7 @@
       ]
     },
     {
-      "id": "investidora", "name": "Investidora", "sprite": "client", "variant": { "style": "long", "skin": "#e8b48a", "hair": "#7c2d12", "shirt": "#7f1d1d", "accent": "#fbbf24", "pants": "#1e293b", "shoes": "#0b0d14", "tie": "#fbbf24", "prop": { "kind": "briefcase", "color": "#1f2937" } },
+      "id": "investidora", "name": "Investidora", "sprite": "client", "variant": { "style": "long", "skin": "#e0a878", "hair": "#7c2d12", "outfit": "suit", "shirt": "#7f1d1d", "accent": "#f8fafc", "tie": "#fbbf24", "pants": "#450a0a", "shoes": "#111827", "prop": { "kind": "briefcase", "color": "#1f2937" } },
       "arena": "Sala do Conselho", "theme": "board", "resistencia": 8, "speed": 1.3,
       "attacks": [
         { "type": "budgetCut", "name": "Corte de orçamento", "duration": 8, "interval": 15 },
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "id": "dono", "name": "Dono da empresa", "sprite": "client", "variant": { "style": "bald", "skin": "#c98b5a", "hair": "#d1d5db", "shirt": "#1e293b", "accent": "#f8fafc", "pants": "#0b0d14", "shoes": "#0b0d14", "tie": "#dc2626", "beard": "full", "beardColor": "#e5e7eb", "prop": { "kind": "briefcase", "color": "#b45309" } },
+      "id": "dono", "name": "Dono da empresa", "sprite": "client", "variant": { "style": "bald", "skin": "#c68a5e", "hair": "#d1d5db", "outfit": "suit", "shirt": "#1f2937", "accent": "#f8fafc", "tie": "#dc2626", "pants": "#111827", "shoes": "#000000", "brows": "raised", "beard": "full", "prop": { "kind": "briefcase", "color": "#92400e" } },
       "arena": "Cobertura", "theme": "rooftop", "resistencia": 10, "speed": 1.4, "final": true,
       "attacks": [
         { "type": "moveRacks", "name": "Reestruturação", "interval": 16 },

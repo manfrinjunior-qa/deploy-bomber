@@ -11,8 +11,12 @@ const MENU = [
   { label: 'BATALHA LOCAL', go: (s: Phaser.Scene) => s.scene.start('StageSelect', { purpose: 'battle' }) },
   { label: 'DESAFIO DO CLIENTE', go: (s: Phaser.Scene) => s.scene.start('CharacterSelect', { mode: 'client', stage: 0 }) },
   { label: 'SELEÇÃO DE FASES', go: (s: Phaser.Scene) => s.scene.start('StageSelect', { purpose: 'story' }) },
+  { label: 'PERSONAGENS', go: (s: Phaser.Scene) => s.scene.start('Characters') },
   { label: 'OPÇÕES', go: (s: Phaser.Scene) => s.scene.start('Options') },
 ];
+
+const MENU_Y = 384;
+const MENU_STEP = 50;
 
 export class TitleScene extends Phaser.Scene {
   private sel = 0;
@@ -39,7 +43,7 @@ export class TitleScene extends Phaser.Scene {
     text(this, 454, 328, 'Exploda o backlog. Sobreviva à sexta-feira.', { font: 'body', size: 22, color: COLORS.dim, align: 'center' });
 
     this.cursor = this.add.graphics();
-    MENU.forEach((m, i) => this.items.push(text(this, 116, 398 + i * 56, m.label, { size: 18 })));
+    MENU.forEach((m, i) => this.items.push(text(this, 116, MENU_Y + i * MENU_STEP, m.label, { size: 18 })));
 
     ROLES.forEach((r, i) => {
       const x = 950 + (i % 2) * 180;
@@ -60,13 +64,13 @@ export class TitleScene extends Phaser.Scene {
   private drawCursor() {
     const g = this.cursor;
     g.clear();
-    const y = 398 + this.sel * 56 - 18;
+    const y = MENU_Y + this.sel * MENU_STEP - 14;
     g.fillStyle(hex('#1e2232'), 1);
-    g.fillRect(64, y, 780, 52);
+    g.fillRect(64, y, 780, 46);
     g.lineStyle(4, hex(COLORS.yellow), 1);
-    g.strokeRect(64, y, 780, 52);
+    g.strokeRect(64, y, 780, 46);
     g.fillStyle(hex(COLORS.yellow), 1);
-    g.fillTriangle(84, y + 16, 84, y + 36, 100, y + 26);
+    g.fillTriangle(84, y + 13, 84, y + 33, 100, y + 23);
     this.items.forEach((t, i) => t.setColor(i === this.sel ? COLORS.yellow : COLORS.text));
   }
 

@@ -65,3 +65,30 @@ test('seleção: esquerda/direita percorrem as 5 variantes e voltam ao Personali
   await expect.poll(variant).toBe(4); // volta pela esquerda até o Astronauta/Mobile
   expect(errors).toEqual([]);
 });
+
+test('título → Personagens: navega por papéis e variantes e volta', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await expect.poll(() => activeScene(page), { timeout: 15_000 }).toBe('Title');
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown', { delay: 50 }); // um toque por quadro
+  await page.keyboard.press('Enter');
+  await expect.poll(() => activeScene(page)).toBe('Characters');
+
+  const state = () =>
+    page.evaluate(() => {
+      const s = (window as unknown as G).__game.scene.getScene('Characters');
+      return [s.role, s.variant];
+    });
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(state).toEqual([0, 2]);
+  await page.keyboard.press('ArrowDown'); // troca de papel volta para a primeira variante
+  await expect.poll(state).toEqual([1, 0]);
+  await page.keyboard.press('ArrowLeft');
+  await expect.poll(state).toEqual([1, 4]);
+
+  await page.keyboard.press('Escape');
+  await expect.poll(() => activeScene(page)).toBe('Title');
+  expect(errors).toEqual([]);
+});

@@ -6,6 +6,7 @@ import { BootScene } from './scenes/BootScene';
 import { TitleScene } from './scenes/TitleScene';
 import { StageSelectScene } from './scenes/StageSelectScene';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene';
+import { CharactersScene } from './scenes/CharactersScene';
 import { OptionsScene } from './scenes/OptionsScene';
 import { ArenaScene } from './scenes/ArenaScene';
 import { ResultsScene } from './scenes/ResultsScene';
@@ -31,7 +32,7 @@ async function start() {
     roundPixels: true,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     fps: { target: 60 },
-    scene: [BootScene, TitleScene, StageSelectScene, CharacterSelectScene, OptionsScene, ArenaScene, ResultsScene],
+    scene: [BootScene, TitleScene, StageSelectScene, CharacterSelectScene, CharactersScene, OptionsScene, ArenaScene, ResultsScene],
   });
   (window as unknown as { __game: Phaser.Game }).__game = game;
 }

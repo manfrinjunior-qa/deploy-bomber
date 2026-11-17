@@ -74,3 +74,21 @@ export function canvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderin
   ctx.imageSmoothingEnabled = false;
   return [cv, ctx];
 }
+
+const rgb = (hex: string) => {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+const toHex = (c: number[]) => '#' + c.map((v) => Math.max(0, Math.min(255, Math.floor(v + 1e-6))).toString(16).padStart(2, '0')).join('');
+
+/** Mistura `hex` com `target` (t de 0 a 1), truncando: é a conta da arte de referência dos personagens. */
+export function mix(hex: string, target: string, t: number): string {
+  const a = rgb(hex);
+  const b = rgb(target);
+  return toHex(a.map((v, i) => v + (b[i] - v) * t));
+}
+
+/** Escurece multiplicando cada canal por `f`. */
+export function dim(hex: string, f: number): string {
+  return toHex(rgb(hex).map((v) => v * f));
+}

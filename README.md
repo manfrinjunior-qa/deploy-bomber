@@ -31,7 +31,7 @@ Outros comandos:
 | P3 | I J K L | U | O |
 | P4 | Setas | Num 0 | Num . |
 
-Menus: setas + ENTER, ESC volta/pausa. Teclas remapeáveis em **Opções** (salvas no navegador).
+Menus: setas + ENTER, ESC volta/pausa. Teclas remapeáveis em **Opções** (salvas no navegador). O menu **Personagens** mostra a ficha de cada papel: atributos, bomba, especial, itens com a chance de drop e todas as variantes com a aparência de cada uma.
 Gamepad N controla o jogador N (A/X = bomba, B/Y = especial, START = pausa).
 
 **Detonação manual (itens C e Selenium):** com eles, as bombas só explodem quando você quer (ou após 12 s).
@@ -68,11 +68,14 @@ Elas ficam em `variants` de `src/data/roles.json` e são montadas em camadas por
 
 | Campo | Valores |
 |---|---|
-| `style` (cabeça) | `quiff`, `combed`, `shaved`, `bald`, `long`, `bun`, `afro`, `hood`, `beanie`, `cap`, `cowboy`, `ninja`, `robot`, `helmet` |
+| `style` (cabeça) | `quiff`, `pompadour`, `side`, `short`, `crop`, `plain`, `fringe`, `shaved`, `bald`, `long`, `bun`, `cowboy`, `ninja`, `robot`, `helmet` |
 | `outfit` (roupa) | `shirt` (padrão), `polo`, `tee`, `suit`, `dress`, `jacket`, `vest`, `spacesuit`, `robot` |
-| `eyewear` | `clear`, `thick`, `shades`, `round-shades` |
+| `eyewear` | `clear`, `dark`, `thick`, `shades`, `round-shades` |
 | `beard` | `full`, `short`, `goatee` (+ `beardColor`) |
-| extras | `brows`, `smile`, `mouth`, `headset`, `tie`, `bandana`, `logo`, `hat`, `outer` |
+| extras | `brows` (`thick`, `raised`), `smile`, `blush`, `mouth`, `headset`, `tie`, `bandana`, `logo`, `hat`, `outer` |
+| cores opcionais | `shade`, `sole`, `pantsShade`, `hairLight`: só quando a sombra calculada não é o tom desejado |
 | `prop` (objeto na mão) | `magnifier`, `card`, `phone`, `guitar`, `briefcase`, `lasso`. Sem `prop`, vale o do papel; `null` deixa as mãos vazias |
+
+Os sprites têm 18×20 pixels e reproduzem a arte de `7-todas-as-variantes.png` pixel a pixel. Essa arte está convertida em grade em `tests/fixtures/reference-sprites.json`, e `npm test` compara os 20 personagens e os 4 chefões do Cliente com ela: mudar o desenho de um personagem existente exige atualizar a referência.
 
 Para criar uma variante nova, basta adicionar uma entrada em `roles.json`. A seleção, o HUD e os resultados se ajustam ao número de variantes.
